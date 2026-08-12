@@ -1,4 +1,4 @@
-# Image Editor Canvas
+# PixelCraft
 
 A **web‑based, Canva‑style image editor** for designing social media carousels, posts, and visual content directly in your browser. No sign‑up, no backend – everything runs client‑side.
 
