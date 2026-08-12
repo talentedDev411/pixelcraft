@@ -1,13 +1,19 @@
 // Composition root: initializes every module and wires up the top-level UI
 // (aspect ratios, toolbox, clear). All other logic lives in its own module.
 
-import { emit } from './bus.js';
+// Bundle the built-in brand-style font faces (woff2 files ride along).
+import '../resources/fonts/fonts.css';
+
+import { emit, on } from './bus.js';
 import { dom } from './dom.js';
 import { initCanvas, updateCanvasSize } from './canvas.js';
 import { initInteractions } from './interactions.js';
 import { initProperties } from './properties.js';
 import { initExport } from './export.js';
 import { addImageElement, addTextElement } from './elements.js';
+import { loadUserFonts } from './fonts.js';
+import { initShortcuts } from './shortcuts.js';
+import { canRedo, canUndo, record, redo, undo } from './history.js';
 import {
     getCanvasHeight,
     getCanvasWidth,
@@ -22,6 +28,7 @@ initCanvas();
 initInteractions();
 initProperties();
 initExport();
+initShortcuts();
 
 // ── Aspect ratio buttons ──
 dom.aspectBtns.forEach(btn => {
@@ -53,8 +60,21 @@ dom.bgColorInput.addEventListener('input', e => {
     dom.designCanvas.style.backgroundColor = e.target.value;
 });
 
+// ── Toolbox: undo / redo buttons ──
+function syncHistoryButtons() {
+    dom.undoTool.classList.toggle('disabled', !canUndo());
+    dom.redoTool.classList.toggle('disabled', !canRedo());
+    dom.undoTool.setAttribute('aria-disabled', String(!canUndo()));
+    dom.redoTool.setAttribute('aria-disabled', String(!canRedo()));
+}
+on('history', syncHistoryButtons);
+dom.undoTool.addEventListener('click', () => { if (canUndo()) undo(); });
+dom.redoTool.addEventListener('click', () => { if (canRedo()) redo(); });
+syncHistoryButtons();
+
 // ── Top bar ──
 dom.clearCanvasBtn.addEventListener('click', () => {
+    record(); // so Ctrl+Z can bring the cleared design back
     setElements([]);
     setSelectedElementId(null);
     dom.designCanvas.style.backgroundColor = '#ffffff';
@@ -72,3 +92,6 @@ window.addEventListener('resize', () => {
 updateCanvasSize();
 dom.designCanvas.style.backgroundColor = '#ffffff';
 emit('render');
+
+// Load custom fonts saved in resources/user/fonts/ (errors are printed).
+loadUserFonts();

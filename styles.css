@@ -41,6 +41,8 @@ body {
 .tool { display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; padding:10px; border-radius:12px; transition:var(--transition); width:56px; color:var(--text-secondary); font-size:0.7rem; font-weight:500; border:2px solid transparent; }
 .tool:hover { background:#f0f0f0; color:var(--text); }
 .tool.active { background:var(--primary-light); color:var(--primary); border-color:var(--primary); }
+.tool-btn.disabled { opacity:0.4; cursor:not-allowed; pointer-events:none; }
+.tool-btn.disabled:hover { background:transparent; color:var(--text-secondary); }
 .tool-icon { font-size:1.3rem; }
 .tool label { cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px; font-size:0.7rem; font-weight:500; color:inherit; width:100%; }
 .tool input[type="file"] { display:none; }
@@ -83,13 +85,25 @@ body {
 .btn-sm { padding:6px 12px; font-size:0.75rem; border-radius:4px; background:#f0f0f0; border:1px solid var(--border); cursor:pointer; }
 .btn-sm:hover { background:#e0e0e0; }
 .empty-state { color:#999; font-size:0.8rem; text-align:center; margin-top:40px; }
+.hint { font-size:0.7rem; color:var(--text-secondary); line-height:1.4; }
+.hint code { background:#f0f0f0; padding:1px 4px; border-radius:4px; font-size:0.68rem; }
+.shadow-color-row { align-items:center; gap:10px; }
+.shadow-color-row input[type="range"] { flex:1; min-width:0; padding:0; border:none; accent-color:var(--primary); height:20px; }
+.opacity-label { font-size:0.7rem; color:var(--text-secondary); min-width:36px; text-align:right; font-weight:600; }
+.btn-danger { color:#b91c1c; border-color:#fecaca; background:#fef2f2; }
+.btn-danger:hover { background:#fee2e2; }
+
+/* Rotate handle for selected text elements */
+.rotate-handle { position:absolute; top:-24px; left:50%; transform:translateX(-50%); width:16px; height:16px; background:var(--primary); border:2px solid #fff; border-radius:50%; cursor:grab; z-index:10; box-sizing:border-box; box-shadow:0 1px 4px rgba(0,0,0,0.25); }
+.rotate-handle::after { content:'⟳'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:9px; color:#fff; line-height:1; }
+.rotate-handle:active { cursor:grabbing; }
 
         /* While exporting, hide all selection chrome so it never leaks into the image.
            Transitions must be disabled too: `.element` animates box-shadow over 0.15s,
            and html-to-image would otherwise capture the mid-transition selection glow. */
         .canvas.exporting * { transition:none !important; }
         .canvas.exporting .element.selected { outline:none; box-shadow:none; }
-        .canvas.exporting .resize-handle { display:none; }
+        .canvas.exporting .resize-handle, .canvas.exporting .rotate-handle { display:none; }
         .canvas.exporting .text-element::selection { background:transparent; }
 @media (max-width: 768px) {
     .editor-layout { flex-direction:column; }

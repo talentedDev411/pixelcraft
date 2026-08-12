@@ -31,16 +31,35 @@ Built with vanilla HTML, CSS, and JavaScript (ES modules), this editor lets you 
 - **Style options**:
   - Font size
   - Font weight (normal, medium, semi-bold, bold, extra bold)
+  - **Font family** – 5 bundled brand‑style families (Inter, Roboto, Poppins, Montserrat, Playfair Display) plus your own imports
   - Text color
   - Background color (including transparent)
-  - Text shadow (custom CSS shadow string)
+  - **Text shadow editor** – pick from 4 pro presets (Soft Drop, Hard Drop, Neon Glow, Paper Cut), fine‑tune offsets X/Y, blur, color and opacity, write an advanced CSS string, or remove the shadow entirely
+  - **Text padding** – four independent sides (top, right, bottom, left) inside the text box
+  - **Corner radius** – four independent corners (top‑left, top‑right, bottom‑left, bottom‑right)
 - **Live preview** – all changes appear immediately.
+
+### Transform (Text & Images)
+- **Rotate** – type any angle in the Transform panel, or drag the ⟳ handle above a selected element (text or image).
+- **Skew** – independent Skew X and Skew Y angles for both text and image elements.
+
+### Custom Fonts
+- Import your own `.ttf`, `.otf`, `.woff`, or `.woff2` files via the **＋ Custom Font…** option in the Font Family dropdown.
+- Files are validated (extension + font magic bytes) and saved to `resources/user/fonts/` behind a `manifest.json` — random files are rejected and only registered fonts are ever loaded.
+- Imported fonts are loaded automatically on every launch; a failed load prints the error message instead of crashing.
+- The built‑in families live in `resources/fonts/` and can be re‑downloaded with `npm run fonts`.
 
 ### Layering & Organisation
 - **Drag** any element (text or image) freely on the canvas.
 - **Bring to front / Send to back** via right‑click context menu.
 - **Duplicate** elements in one click.
 - **Delete** elements when they’re no longer needed.
+
+### Undo / Redo & Keyboard Shortcuts
+- **Undo / Redo** every user action (add, move, resize, rotate, style edits, text typing, delete…) with **Ctrl+Z** and **Ctrl+Y** / **Ctrl+Shift+Z**, or the **↩️ Undo / ↪️ Redo** buttons in the left toolbox (disabled while nothing can be undone/redone) — one undo step per drag/resize/rotate gesture.
+- **Cut / Copy / Paste** the selected element with **Ctrl+X / Ctrl+C / Ctrl+V** (same‑session clipboard); repeated pastes step away from the original spot.
+- **Delete** (or **Backspace**) removes the selected element.
+- Everything behaves like a text field: typing inside a text box keeps native text cut/copy/paste for highlighted text, and the properties‑panel fields keep their native field behavior (undo/redo there still shares the same history).
 
 ### Background & Canvas Settings
 - **Custom background colour** – choose any solid color for the canvas using the toolbox colour picker.
@@ -107,9 +126,16 @@ grow and be tested independently.
 ├── index.html                 # Markup shell (entry point)
 ├── styles.css                 # All styling
 ├── package.json               # npm scripts & dependencies
+├── vite.config.js             # Vite config + user‑font import API plugin
+├── resources/
+│   ├── fonts/                 # Bundled brand‑style font families (@font-face)
+│   └── user/fonts/            # Imported custom fonts + manifest.json
+├── scripts/
+│   ├── download-fonts.mjs     # Re‑download the bundled families (npm run fonts)
+│   └── user-fonts-plugin.mjs  # Dev server API: save/validate/serve custom fonts
 └── src/
     ├── main.js                # Composition root: boots modules & wires top‑bar UI
-    ├── constants.js           # Aspect ratios, defaults, export scale
+    ├── constants.js           # Aspect ratios, font list, shadow presets, defaults
     ├── utils.js               # generateId, clamp, findElementById
     ├── state.js               # Central app state (elements, selection, canvas size)
     ├── bus.js                 # Tiny pub/sub event bus ('render', 'selection', …)
@@ -117,8 +143,11 @@ grow and be tested independently.
     ├── canvas.js              # Canvas sizing, rendering, model↔DOM sync
     ├── selection.js           # Select/deselect operations
     ├── elements.js            # Element factories (text, image) & structure ops
-    ├── interactions.js        # Drag, resize, right‑click context menu
+    ├── interactions.js        # Drag, resize, rotate, right‑click context menu
+    ├── history.js             # Undo/redo snapshot stacks for user actions
+    ├── shortcuts.js           # Global keyboard shortcuts (undo/redo, cut/copy/paste)
     ├── properties.js          # Right‑hand properties panel
+    ├── fonts.js               # Custom font registry, manifest loading, import
     └── export.js              # High‑resolution PNG export via html-to-image
 ```
 
@@ -133,3 +162,6 @@ grow and be tested independently.
   in `elements.js` and a branch in `canvas.js` — no changes to the UI wiring.
 - **Export is isolated**: swap `html-to-image` for another renderer by editing
   only `src/export.js`.
+- **Custom fonts need the dev server**: the app is client‑side, so importing a
+  font POSTs it to the Vite plugin, which validates and persists it. The
+  `npm run dev` server also serves the saved files back to the browser.

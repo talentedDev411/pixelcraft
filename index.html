@@ -40,6 +40,8 @@
             <div class="tool" id="bgColorTool">
                 <span class="tool-icon">🎨</span> BG <input type="color" id="canvasBgColor" value="#ffffff" />
             </div>
+            <div class="tool tool-btn disabled" id="undoTool" title="Undo (Ctrl+Z)" aria-disabled="true"><span class="tool-icon">↩️</span> Undo</div>
+            <div class="tool tool-btn disabled" id="redoTool" title="Redo (Ctrl+Y)" aria-disabled="true"><span class="tool-icon">↪️</span> Redo</div>
         </div>
 
         <div class="canvas-area" id="canvasArea">
@@ -73,6 +75,24 @@
                         </div>
                     </div>
                 </div>
+                <div class="property-group">
+                    <label>Transform</label>
+                    <div class="position-grid">
+                        <div class="position-field">
+                            <label>Rotate °</label>
+                            <input type="number" id="rotationInput" min="-180" max="180" step="1" value="0" />
+                        </div>
+                        <div class="position-field">
+                            <label>Skew X °</label>
+                            <input type="number" id="skewXInput" min="-90" max="90" step="1" value="0" />
+                        </div>
+                        <div class="position-field">
+                            <label>Skew Y °</label>
+                            <input type="number" id="skewYInput" min="-90" max="90" step="1" value="0" />
+                        </div>
+                    </div>
+                    <div class="hint">Tip: drag the ⟳ handle above a selected element to rotate.</div>
+                </div>
             </div>
             <div id="textProperties" style="display:none;">
                 <div class="property-group">
@@ -94,16 +114,70 @@
                     </select>
                 </div>
                 <div class="property-group">
+                    <label>Font Family</label>
+                    <select id="fontFamilyInput"></select>
+                    <div class="hint" id="customFontHint" style="display:none;">Pick a <strong>.ttf</strong>, <strong>.otf</strong>, <strong>.woff</strong>, or <strong>.woff2</strong> file — it is saved to <code>resources/user/fonts/</code> and offered here next time.</div>
+                    <input type="file" id="customFontInput" accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2" hidden />
+                </div>
+                <div class="property-group">
                     <label>Text Color</label>
                     <div class="color-row"><input type="color" id="textColorInput" value="#000000" /></div>
                 </div>
                 <div class="property-group">
                     <label>Background Color</label>
-                    <div class="color-row"><input type="color" id="textBgColorInput" value="#ffffff00" /></div>
+                    <div class="color-row">
+                        <input type="color" id="textBgColorInput" value="#ffffff00" />
+                        <button class="btn-sm" id="removeTextBgBtn" type="button" title="Remove the text background (transparent)">🗑 Remove BG</button>
+                    </div>
+                </div>
+                <div class="property-group">
+                    <label>Text Padding (px)</label>
+                    <div class="position-grid">
+                        <div class="position-field"><label>Top</label><input type="number" id="paddingTopInput" min="0" max="120" step="1" value="8" /></div>
+                        <div class="position-field"><label>Right</label><input type="number" id="paddingRightInput" min="0" max="120" step="1" value="8" /></div>
+                        <div class="position-field"><label>Bottom</label><input type="number" id="paddingBottomInput" min="0" max="120" step="1" value="8" /></div>
+                        <div class="position-field"><label>Left</label><input type="number" id="paddingLeftInput" min="0" max="120" step="1" value="8" /></div>
+                    </div>
                 </div>
                 <div class="property-group">
                     <label>Text Shadow</label>
-                    <input type="text" id="textShadowInput" placeholder="0px 2px 4px rgba(0,0,0,0.3)" />
+                    <select id="shadowPresetInput">
+                        <option value="none">None (no shadow)</option>
+                        <option value="custom">Custom…</option>
+                    </select>
+                    <div class="position-grid">
+                        <div class="position-field"><label>X</label><input type="number" id="shadowXInput" step="1" /></div>
+                        <div class="position-field"><label>Y</label><input type="number" id="shadowYInput" step="1" /></div>
+                        <div class="position-field"><label>Blur</label><input type="number" id="shadowBlurInput" min="0" step="1" /></div>
+                    </div>
+                    <div class="color-row shadow-color-row">
+                        <input type="color" id="shadowColorInput" value="#000000" />
+                        <input type="range" id="shadowOpacityInput" min="0" max="100" step="1" value="100" title="Opacity" />
+                        <span class="opacity-label" id="shadowOpacityLabel">100%</span>
+                    </div>
+                    <input type="text" id="textShadowInput" placeholder="Advanced CSS, e.g. 0 2px 4px rgba(0,0,0,0.3)" />
+                    <button class="btn-sm btn-danger" id="removeShadowBtn" type="button">🗑 Remove Shadow</button>
+                </div>
+                <div class="property-group">
+                    <label>Corner Radius (px)</label>
+                    <div class="position-grid">
+                        <div class="position-field">
+                            <label>Top-left</label>
+                            <input type="number" id="brTLInput" min="0" max="200" step="1" />
+                        </div>
+                        <div class="position-field">
+                            <label>Top-right</label>
+                            <input type="number" id="brTRInput" min="0" max="200" step="1" />
+                        </div>
+                        <div class="position-field">
+                            <label>Bottom-left</label>
+                            <input type="number" id="brBLInput" min="0" max="200" step="1" />
+                        </div>
+                        <div class="position-field">
+                            <label>Bottom-right</label>
+                            <input type="number" id="brBRInput" min="0" max="200" step="1" />
+                        </div>
+                    </div>
                 </div>
                 <button class="btn-sm" id="deleteElementBtn">🗑️ Delete Element</button>
             </div>

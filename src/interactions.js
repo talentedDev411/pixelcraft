@@ -5,6 +5,7 @@
 import { emit } from './bus.js';
 import { dom } from './dom.js';
 import { updateElementModelAndDOM } from './canvas.js';
+import { beginGesture, endGesture } from './history.js';
 import {
     deleteElement,
     duplicateElement,
@@ -29,6 +30,10 @@ export function initInteractions() {
     let resizeHandle = null;
     let resizeStart = {};
 
+    // ── Rotate state ──
+    let isRotating = false;
+    let rotateStart = {};
+
     // ── Drag state ──
     let draggedElement = null;
     let dragOffset = {};
@@ -41,7 +46,8 @@ export function initInteractions() {
         e.stopPropagation();
         e.preventDefault();
         const el = getSelectedElement();
-        if (!el || el.type !== 'image') return;
+        if (!el) return; // images and text are both resizable
+        beginGesture(); // one undo step for the whole resize
         isResizing = true;
         resizeHandle = handle;
         resizeStart = {
@@ -51,6 +57,18 @@ export function initInteractions() {
     }
 
     window.addEventListener('mousemove', e => {
+        if (isRotating) {
+            const el = getSelectedElement();
+            if (el) {
+                let angle = Math.round(
+                    Math.atan2(e.clientY - rotateStart.cy, e.clientX - rotateStart.cx) * 180 / Math.PI + 90
+                );
+                angle = ((angle + 180) % 360 + 360) % 360 - 180; // normalize to [-180, 180]
+                updateElementModelAndDOM(el.id, { rotation: angle });
+                emit('transform', el.id);
+            }
+            return;
+        }
         if (isResizing && resizeHandle) {
             const el = getSelectedElement();
             if (el) {
@@ -85,12 +103,29 @@ export function initInteractions() {
     window.addEventListener('mouseup', () => {
         isResizing = false;
         resizeHandle = null;
+        isRotating = false;
         draggedElement = null;
+        endGesture();
     });
 
-    // ── Drag start / select / resize handle hit ──
+    // ── Drag start / select / resize / rotate handle hit ──
     designCanvas.addEventListener('mousedown', e => {
         if (isResizing) return;
+        const rotateHandle = e.target.closest('.rotate-handle');
+        if (rotateHandle) {
+            e.stopPropagation();
+            e.preventDefault();
+            const el = getSelectedElement();
+            if (!el) return;
+            beginGesture(); // one undo step for the whole rotation
+            isRotating = true;
+            const rect = designCanvas.getBoundingClientRect();
+            rotateStart = {
+                cx: rect.left + el.x + el.width / 2,
+                cy: rect.top + el.y + el.height / 2,
+            };
+            return;
+        }
         const handle = e.target.closest('.resize-handle');
         if (handle) { startResize(handle, e); return; }
         const elementDiv = e.target.closest('.element');
@@ -99,6 +134,7 @@ export function initInteractions() {
         selectElement(id);
         draggedElement = findElementById(getElements(), id);
         if (!draggedElement) return;
+        beginGesture(); // one undo step for the whole drag
         const rect = designCanvas.getBoundingClientRect();
         dragOffset.x = e.clientX - rect.left - draggedElement.x;
         dragOffset.y = e.clientY - rect.top - draggedElement.y;

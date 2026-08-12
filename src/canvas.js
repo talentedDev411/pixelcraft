@@ -3,7 +3,8 @@
 
 import { emit, on } from './bus.js';
 import { dom } from './dom.js';
-import { ASPECT_RATIOS } from './constants.js';
+import { ASPECT_RATIOS, paddingCss, radiusCss, transformCss } from './constants.js';
+import { inGesture, record } from './history.js';
 import {
     getAspectRatio,
     getCanvasHeight,
@@ -51,15 +52,20 @@ export function fullRender() {
             div.textContent = el.content;
             div.style.fontSize = el.fontSize + 'px';
             div.style.fontWeight = el.fontWeight || '400';
+            div.style.fontFamily = `'${el.fontFamily}', sans-serif`;
             div.style.color = el.color;
             div.style.backgroundColor = el.bgColor === 'transparent' ? 'transparent' : el.bgColor;
             div.style.textShadow = el.textShadow;
+            div.style.borderRadius = radiusCss(el);
+            div.style.padding = paddingCss(el);
+            div.style.transform = transformCss(el);
         } else if (el.type === 'image') {
             const img = document.createElement('img');
             img.src = el.src;
             img.draggable = false;
             img.style.objectFit = el.fitMode || 'fill';
             div.appendChild(img);
+            div.style.transform = transformCss(el);
         }
         designCanvas.appendChild(div);
     });
@@ -75,7 +81,7 @@ export function applySelectionToDOM(id) {
         if (prevSelected.classList.contains('text-element')) {
             prevSelected.setAttribute('contenteditable', 'false');
         }
-        prevSelected.querySelectorAll('.resize-handle').forEach(h => h.remove());
+        prevSelected.querySelectorAll('.resize-handle, .rotate-handle').forEach(h => h.remove());
     }
     if (!id) return;
     const elDiv = designCanvas.querySelector(`[data-id="${id}"]`);
@@ -84,6 +90,8 @@ export function applySelectionToDOM(id) {
     const el = findElementById(getElements(), id);
     if (el && el.type === 'text') {
         elDiv.setAttribute('contenteditable', 'true');
+        addResizeHandles(elDiv);
+        addRotateHandle(elDiv);
         if (document.activeElement !== elDiv) {
             elDiv.focus();
             const range = document.createRange();
@@ -95,6 +103,7 @@ export function applySelectionToDOM(id) {
         }
     } else if (el && el.type === 'image') {
         addResizeHandles(elDiv);
+        addRotateHandle(elDiv);
     }
 }
 
@@ -102,6 +111,9 @@ export function applySelectionToDOM(id) {
 export function updateElementModelAndDOM(id, updates, clampToCanvas = false) {
     const el = findElementById(getElements(), id);
     if (!el) return;
+    // Record the pre-change state as an undo point (skipped while a drag /
+    // resize / rotate gesture is running — that records once at start).
+    if (!inGesture()) record();
     // Keep the model in sync — the DOM must never be ahead of the state,
     // or a later fullRender would silently revert live edits.
     if (updates.x !== undefined) el.x = updates.x;
@@ -115,6 +127,17 @@ export function updateElementModelAndDOM(id, updates, clampToCanvas = false) {
     if (updates.color !== undefined) el.color = updates.color;
     if (updates.bgColor !== undefined) el.bgColor = updates.bgColor;
     if (updates.textShadow !== undefined) el.textShadow = updates.textShadow;
+    if (updates.fontFamily !== undefined) el.fontFamily = updates.fontFamily;
+    if (updates.rotation !== undefined) el.rotation = updates.rotation;
+    if (updates.skewX !== undefined) el.skewX = updates.skewX;
+    if (updates.skewY !== undefined) el.skewY = updates.skewY;
+    if (updates.padding !== undefined) {
+        // Padding can be a single number (legacy) or a partial {top,right,bottom,left}.
+        el.padding = typeof updates.padding === 'object'
+            ? { ...(typeof el.padding === 'object' ? el.padding : {}), ...updates.padding }
+            : updates.padding;
+    }
+    if (updates.borderRadius !== undefined) el.borderRadius = { ...(el.borderRadius || {}), ...updates.borderRadius };
     if (updates.src !== undefined) el.src = updates.src;
     if (clampToCanvas) {
         if (el.x < 0) { el.width += el.x; el.x = 0; }
@@ -137,6 +160,9 @@ export function updateElementModelAndDOM(id, updates, clampToCanvas = false) {
         if (updates.color !== undefined) domEl.style.color = updates.color;
         if (updates.bgColor !== undefined) domEl.style.backgroundColor = updates.bgColor === 'transparent' ? 'transparent' : updates.bgColor;
         if (updates.textShadow !== undefined) domEl.style.textShadow = updates.textShadow;
+        if (updates.fontFamily !== undefined) domEl.style.fontFamily = `'${updates.fontFamily}', sans-serif`;
+        if (updates.padding !== undefined) domEl.style.padding = paddingCss(el);
+        if (updates.borderRadius !== undefined) domEl.style.borderRadius = radiusCss(el);
     } else if (el.type === 'image') {
         if (updates.src !== undefined) {
             const img = domEl.querySelector('img');
@@ -146,6 +172,9 @@ export function updateElementModelAndDOM(id, updates, clampToCanvas = false) {
             const img = domEl.querySelector('img');
             if (img) img.style.objectFit = updates.fitMode;
         }
+    }
+    if (updates.rotation !== undefined || updates.skewX !== undefined || updates.skewY !== undefined) {
+        domEl.style.transform = transformCss(el);
     }
 }
 
@@ -162,6 +191,7 @@ export function initCanvas() {
         if (!div) return;
         const el = findElementById(getElements(), div.dataset.id);
         if (!el) return;
+        record();
         el.content = div.textContent;
         emit('text-edited', el.content);
     });
@@ -173,6 +203,15 @@ function addResizeHandles(parentDiv) {
         const handle = document.createElement('div');
         handle.className = `resize-handle ${pos}`;
         handle.dataset.handle = pos;
+        handle.contentEditable = 'false';
         parentDiv.appendChild(handle);
     });
+}
+
+/** Attach the rotate handle to a selected element (text or image). */
+function addRotateHandle(parentDiv) {
+    const handle = document.createElement('div');
+    handle.className = 'rotate-handle';
+    handle.contentEditable = 'false';
+    parentDiv.appendChild(handle);
 }
