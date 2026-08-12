@@ -1,0 +1,18 @@
+{
+  "name": "freebuff-design-studio",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Canva-style image editor with high-resolution PNG export",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "html-to-image": "^1.11.11"
+  },
+  "devDependencies": {
+    "vite": "^6.3.5"
+  }
+}
