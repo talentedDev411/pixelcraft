@@ -28,12 +28,13 @@ Built with vanilla HTML, CSS, and JavaScript (ES modules), this editor lets you 
 
 ### Text Elements
 - **Click‑to‑edit** text boxes – just like PowerPoint, select a text element and start typing.
+- **Resizable text boxes** – the same 8 drag handles images get (corners, edges) for exact sizing, independent of the text content.
 - **Style options**:
   - Font size
   - Font weight (normal, medium, semi-bold, bold, extra bold)
   - **Font family** – 5 bundled brand‑style families (Inter, Roboto, Poppins, Montserrat, Playfair Display) plus your own imports
   - Text color
-  - Background color (including transparent)
+  - Background color (including transparent), with a one‑click **🗑 Remove BG** button to go transparent instantly
   - **Text shadow editor** – pick from 4 pro presets (Soft Drop, Hard Drop, Neon Glow, Paper Cut), fine‑tune offsets X/Y, blur, color and opacity, write an advanced CSS string, or remove the shadow entirely
   - **Text padding** – four independent sides (top, right, bottom, left) inside the text box
   - **Corner radius** – four independent corners (top‑left, top‑right, bottom‑left, bottom‑right)
@@ -97,7 +98,7 @@ npm run preview   # serve the production build locally
    - Click **Text** in the left toolbox to insert a text box.
    - Click **Image** to upload an image (or drag and drop it onto the canvas area).
 3. **Edit**:
-   - **Click** an element to select it. Handles appear around images, and text becomes editable.
+   - **Click** an element to select it. Handles appear around images and text (both are resizable), and text becomes editable.
    - **Drag** to move an element.
    - Use the **right‑click menu** to bring forward/send backward, duplicate, delete, or change image fit mode.
    - Use the **properties panel** on the right to change text content, font size, colours, shadow, or swap images.
