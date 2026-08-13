@@ -56,6 +56,12 @@ Built with vanilla HTML, CSS, and JavaScript (ES modules), this editor lets you 
 - **Copy / Cut / Paste the group** in one shot — Ctrl+C / Ctrl+X / Ctrl+V duplicates or moves every selected element, and Delete removes them all.
 - The first selected element stays the **primary** (it keeps the resize/rotate handles and drives the properties panel — edits there apply to it).
 
+### Select Mode (mobile-friendly copy/paste)
+- **Select tool** in the left toolbox has two states — off, or **active** (darker background) — and while active a small **Copy / Paste menu** appears right next to the button.
+- **Tap elements** to toggle them in/out of the selection (taps never start a drag or pop the keyboard) — the mobile equivalent of Ctrl+click.
+- **Copy** becomes selectable once at least one element is selected; clicking it copies the whole selection and turns it off while **Paste** lights up (repeatable — each paste steps away from the original spot).
+- **Cancellable** — tap the Select tool again (or press **Esc**): if nothing was pasted yet the selected components are dropped; after a paste, exiting just keeps the result.
+
 ### Layering & Organisation
 - **Drag** any element (text or image) freely on the canvas — or drag a multi‑selected group together.
 - **Bring to front / Send to back** via right‑click context menu.
@@ -63,7 +69,7 @@ Built with vanilla HTML, CSS, and JavaScript (ES modules), this editor lets you 
 - **Delete** elements when they’re no longer needed.
 
 ### Undo / Redo & Keyboard Shortcuts
-- **Undo / Redo** every user action (add, move, resize, rotate, style edits, text typing, delete…) with **Ctrl+Z** and **Ctrl+Y** / **Ctrl+Shift+Z**, or the **↩️ Undo / ↪️ Redo** buttons in the left toolbox (disabled while nothing can be undone/redone) — one undo step per drag/resize/rotate gesture.
+- **Undo / Redo** every user action (add, move, resize, rotate, style edits, text typing, delete…) with **Ctrl+Z** and **Ctrl+Y** / **Ctrl+Shift+Z**, or the single **↩️ / ↪️ undo-redo** control in the left toolbox (one button, two halves; each half disables independently) — one undo step per drag/resize/rotate gesture.
 - **Cut / Copy / Paste** the selected element(s) with **Ctrl+X / Ctrl+C / Ctrl+V** (same‑session clipboard; multi‑select copies the whole group); repeated pastes step away from the original spot.
 - **Delete** (or **Backspace**) removes the selected element(s).
 - Everything behaves like a text field: typing inside a text box keeps native text cut/copy/paste for highlighted text, and the properties‑panel fields keep their native field behavior (undo/redo there still shares the same history).
