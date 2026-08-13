@@ -50,20 +50,37 @@ Built with vanilla HTML, CSS, and JavaScript (ES modules), this editor lets you 
 - Imported fonts are loaded automatically on every launch; a failed load prints the error message instead of crashing.
 - The built‑in families live in `resources/fonts/` and can be re‑downloaded with `npm run fonts`.
 
+### Multi‑Select (Ctrl+Click)
+- **Select several elements at once** — hold **Ctrl** (or **Cmd**) and click elements to add/remove them from the selection; the panel shows how many are selected.
+- **Drag the whole group** together (positions stay locked relative to each other, clamped to the canvas).
+- **Copy / Cut / Paste the group** in one shot — Ctrl+C / Ctrl+X / Ctrl+V duplicates or moves every selected element, and Delete removes them all.
+- The first selected element stays the **primary** (it keeps the resize/rotate handles and drives the properties panel — edits there apply to it).
+
 ### Layering & Organisation
-- **Drag** any element (text or image) freely on the canvas.
+- **Drag** any element (text or image) freely on the canvas — or drag a multi‑selected group together.
 - **Bring to front / Send to back** via right‑click context menu.
 - **Duplicate** elements in one click.
 - **Delete** elements when they’re no longer needed.
 
 ### Undo / Redo & Keyboard Shortcuts
 - **Undo / Redo** every user action (add, move, resize, rotate, style edits, text typing, delete…) with **Ctrl+Z** and **Ctrl+Y** / **Ctrl+Shift+Z**, or the **↩️ Undo / ↪️ Redo** buttons in the left toolbox (disabled while nothing can be undone/redone) — one undo step per drag/resize/rotate gesture.
-- **Cut / Copy / Paste** the selected element with **Ctrl+X / Ctrl+C / Ctrl+V** (same‑session clipboard); repeated pastes step away from the original spot.
-- **Delete** (or **Backspace**) removes the selected element.
+- **Cut / Copy / Paste** the selected element(s) with **Ctrl+X / Ctrl+C / Ctrl+V** (same‑session clipboard; multi‑select copies the whole group); repeated pastes step away from the original spot.
+- **Delete** (or **Backspace**) removes the selected element(s).
 - Everything behaves like a text field: typing inside a text box keeps native text cut/copy/paste for highlighted text, and the properties‑panel fields keep their native field behavior (undo/redo there still shares the same history).
 
+### Multiple Pages (Canvases)
+- **Multiple canvases** – a design can hold any number of pages; every page has its own elements **and its own background color** (set with the toolbox picker while that page is active).
+- **Page track** – a strip under the canvas shows every page as a numbered thumbnail with a **live preview of its contents** (elements rendered at the correct scaled position — dragging, resizing or typing updates the active page's thumbnail in real time) plus a content badge (🔤 text / 🖼️ image counts, or *Empty*); click one to navigate.
+- **Add / Clone / Delete** pages from the track buttons:
+  - **＋ Add** – inserts a new empty page after the current one.
+  - **⧉ Clone** – duplicates the current page *with all of its contents* (deep copy) right after it and jumps to the copy.
+  - **🗑 Delete** – removes the current page (never the last one) and switches to a neighbour.
+- **Drag an element (or a multi‑selected group) to another page** – grab it and drag onto a page thumbnail in the track (the target thumbnail highlights); releasing moves everything to that page and switches you over.
+- All page operations (add, clone, delete, move‑across) are **undoable** with Ctrl+Z.
+- **Export** always captures the currently active page.
+
 ### Background & Canvas Settings
-- **Custom background colour** – choose any solid color for the canvas using the toolbox colour picker.
+- **Custom background colour** – choose any solid color for the canvas using the toolbox colour picker. The color is stored **per page**, so each canvas keeps its own background.
 
 ### Export
 - **Export to PNG** – download your design as a high‑resolution (2×) image with the click of a button.
@@ -102,7 +119,8 @@ npm run preview   # serve the production build locally
    - **Drag** to move an element.
    - Use the **right‑click menu** to bring forward/send backward, duplicate, delete, or change image fit mode.
    - Use the **properties panel** on the right to change text content, font size, colours, shadow, or swap images.
-4. **Export** – click the **Export** button in the top bar to download your design as a PNG.
+4. **Work with pages**: use the **page track** under the canvas to add, clone (with contents) or delete pages; click a thumbnail to navigate; drag an element onto another page's thumbnail to move it there.
+5. **Export** – click the **Export** button in the top bar to download the active page as a PNG.
 
 ---
 
@@ -138,7 +156,8 @@ grow and be tested independently.
     ├── main.js                # Composition root: boots modules & wires top‑bar UI
     ├── constants.js           # Aspect ratios, font list, shadow presets, defaults
     ├── utils.js               # generateId, clamp, findElementById
-    ├── state.js               # Central app state (elements, selection, canvas size)
+    ├── state.js               # Central app state (pages, elements, selection, canvas size)
+    ├── pages.js               # Multi‑canvas: page track, add/clone/delete/switch, thumbnails
     ├── bus.js                 # Tiny pub/sub event bus ('render', 'selection', …)
     ├── dom.js                 # Central DOM reference registry
     ├── canvas.js              # Canvas sizing, rendering, model↔DOM sync
