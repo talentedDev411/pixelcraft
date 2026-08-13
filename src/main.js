@@ -13,6 +13,7 @@ import { initExport } from './export.js';
 import { addImageElement, addTextElement } from './elements.js';
 import { loadUserFonts } from './fonts.js';
 import { initPages, addPage, cloneActivePage } from './pages.js';
+import { initSelectMode } from './selectmode.js';
 import { initShortcuts } from './shortcuts.js';
 import { canRedo, canUndo, record, redo, undo } from './history.js';
 import {
@@ -31,6 +32,7 @@ initInteractions();
 initProperties();
 initExport();
 initShortcuts();
+initSelectMode();
 initPages();
 
 // ── Aspect ratio buttons ──

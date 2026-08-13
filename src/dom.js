@@ -13,6 +13,10 @@ export const dom = {
     bgColorInput: document.getElementById('canvasBgColor'),
     undoTool: document.getElementById('undoTool'),
     redoTool: document.getElementById('redoTool'),
+    selectTool: document.getElementById('selectTool'),
+    selectMenu: document.getElementById('selectMenu'),
+    selectCopyBtn: document.getElementById('selectCopyBtn'),
+    selectPasteBtn: document.getElementById('selectPasteBtn'),
 
     // Canvas area
     canvasArea: document.getElementById('canvasArea'),

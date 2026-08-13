@@ -5,6 +5,7 @@ import { emit, on } from './bus.js';
 import { dom } from './dom.js';
 import { ASPECT_RATIOS, paddingCss, radiusCss, transformCss } from './constants.js';
 import { inGesture, record } from './history.js';
+import { isSelectMode } from './selectmode.js';
 import {
     getActivePage,
     getAspectRatio,
@@ -143,7 +144,9 @@ export function applySelectionToDOM(ids) {
             elDiv.setAttribute('contenteditable', 'true');
             addResizeHandles(elDiv);
             addRotateHandle(elDiv);
-            if (document.activeElement !== elDiv) {
+            // In select mode a tap must never summon the keyboard — the
+            // mobile user is picking elements, not editing text.
+            if (document.activeElement !== elDiv && !isSelectMode()) {
                 elDiv.focus();
                 const range = document.createRange();
                 range.selectNodeContents(elDiv);

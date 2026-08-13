@@ -14,6 +14,7 @@ import {
 } from './elements.js';
 import { beginGesture, endGesture } from './history.js';
 import { getThumbPageIdAt, setDropHighlight } from './pages.js';
+import { isSelectMode } from './selectmode.js';
 import { deselectAll, selectElement, toggleSelectElement } from './selection.js';
 import {
     getActivePageId,
@@ -138,6 +139,17 @@ export function initInteractions() {
     // ── Drag start / select / resize / rotate handle hit ──
     designCanvas.addEventListener('mousedown', e => {
         if (isResizing) return;
+        // Select mode: taps only toggle selection membership — never drag,
+        // resize, rotate, or drop a caret into a text box. preventDefault
+        // stops the browser from focusing the contenteditable element.
+        if (isSelectMode()) {
+            const elementDiv = e.target.closest('.element');
+            if (elementDiv) {
+                e.preventDefault();
+                toggleSelectElement(elementDiv.dataset.id);
+            }
+            return;
+        }
         const rotateHandle = e.target.closest('.rotate-handle');
         if (rotateHandle) {
             e.stopPropagation();

@@ -33,15 +33,19 @@
 
     <div class="editor-layout">
         <div class="toolbox">
-            <div class="tool" id="addTextTool"><span class="tool-icon">🔤</span> Text</div>
-            <div class="tool" id="addImageTool">
+            <div class="tool" id="addTextTool" title="Add a text box"><span class="tool-icon">🔤</span> Text</div>
+            <div class="tool" id="addImageTool" title="Upload an image">
                 <label><span class="tool-icon">🖼️</span> Image <input type="file" id="imageUploadInput" accept="image/*" /></label>
             </div>
-            <div class="tool" id="bgColorTool">
+            <div class="tool" id="bgColorTool" title="Canvas background color">
                 <span class="tool-icon">🎨</span> BG <input type="color" id="canvasBgColor" value="#ffffff" />
             </div>
-            <div class="tool tool-btn disabled" id="undoTool" title="Undo (Ctrl+Z)" aria-disabled="true"><span class="tool-icon">↩️</span> Undo</div>
-            <div class="tool tool-btn disabled" id="redoTool" title="Redo (Ctrl+Y)" aria-disabled="true"><span class="tool-icon">↪️</span> Redo</div>
+            <div class="tool tool-split" id="historyTool" title="Undo (Ctrl+Z) / Redo (Ctrl+Y)">
+                <div class="tool-half tool-btn disabled" id="undoTool" title="Undo (Ctrl+Z)" aria-disabled="true"><span class="tool-icon">↩️</span></div>
+                <div class="tool-divider"></div>
+                <div class="tool-half tool-btn disabled" id="redoTool" title="Redo (Ctrl+Y)" aria-disabled="true"><span class="tool-icon">↪️</span></div>
+            </div>
+            <div class="tool" id="selectTool" title="Select mode — tap elements to multi-select, then copy/paste (mobile friendly)"><span class="tool-icon">👆</span> Select</div>
         </div>
 
         <div class="canvas-area" id="canvasArea">
@@ -198,6 +202,13 @@
                 <button class="btn-sm" id="deleteImageBtn">🗑️ Delete Element</button>
             </div>
         </div>
+    </div>
+
+    <div class="select-menu" id="selectMenu" style="display:none;">
+        <div class="select-menu-label">Select mode</div>
+        <button class="select-menu-btn disabled" id="selectCopyBtn" type="button" title="Copy the selected element(s)" disabled>📋 Copy</button>
+        <button class="select-menu-btn disabled" id="selectPasteBtn" type="button" title="Paste copied element(s)" disabled>📥 Paste</button>
+        <div class="select-menu-hint">Tap elements to select · tap Select again to cancel</div>
     </div>
 
     <script type="module" src="/src/main.js"></script>
