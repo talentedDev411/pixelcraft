@@ -12,13 +12,15 @@ import { initProperties } from './properties.js';
 import { initExport } from './export.js';
 import { addImageElement, addTextElement } from './elements.js';
 import { loadUserFonts } from './fonts.js';
+import { initPages, addPage, cloneActivePage } from './pages.js';
 import { initShortcuts } from './shortcuts.js';
 import { canRedo, canUndo, record, redo, undo } from './history.js';
 import {
+    getActivePage,
     getCanvasHeight,
     getCanvasWidth,
     getElements,
-    setElements,
+    getPages,
     setSelectedElementId,
     setAspectRatio,
 } from './state.js';
@@ -29,6 +31,7 @@ initInteractions();
 initProperties();
 initExport();
 initShortcuts();
+initPages();
 
 // ── Aspect ratio buttons ──
 dom.aspectBtns.forEach(btn => {
@@ -37,12 +40,14 @@ dom.aspectBtns.forEach(btn => {
         btn.classList.add('active');
         setAspectRatio(btn.dataset.ratio);
         updateCanvasSize();
-        // Keep elements inside the resized canvas.
-        getElements().forEach(el => {
-            el.x = Math.min(el.x, getCanvasWidth() - el.width);
-            el.x = Math.max(0, el.x);
-            el.y = Math.min(el.y, getCanvasHeight() - el.height);
-            el.y = Math.max(0, el.y);
+        // Keep every page's elements inside the resized canvas.
+        getPages().forEach(page => {
+            page.elements.forEach(el => {
+                el.x = Math.min(el.x, getCanvasWidth() - el.width);
+                el.x = Math.max(0, el.x);
+                el.y = Math.min(el.y, getCanvasHeight() - el.height);
+                el.y = Math.max(0, el.y);
+            });
         });
         emit('render');
     });
@@ -57,6 +62,9 @@ dom.imageUploadInput.addEventListener('change', e => {
     }
 });
 dom.bgColorInput.addEventListener('input', e => {
+    // Background lives on the active page so each page keeps its own color.
+    const page = getActivePage();
+    if (page) page.bgColor = e.target.value;
     dom.designCanvas.style.backgroundColor = e.target.value;
 });
 
@@ -75,7 +83,11 @@ syncHistoryButtons();
 // ── Top bar ──
 dom.clearCanvasBtn.addEventListener('click', () => {
     record(); // so Ctrl+Z can bring the cleared design back
-    setElements([]);
+    const page = getActivePage();
+    if (page) {
+        page.elements = [];
+        page.bgColor = '#ffffff';
+    }
     setSelectedElementId(null);
     dom.designCanvas.style.backgroundColor = '#ffffff';
     dom.bgColorInput.value = '#ffffff';
@@ -90,8 +102,7 @@ window.addEventListener('resize', () => {
 
 // ── Initial layout ──
 updateCanvasSize();
-dom.designCanvas.style.backgroundColor = '#ffffff';
-emit('render');
+emit('render'); // paints the first page, its background and the page track
 
 // Load custom fonts saved in resources/user/fonts/ (errors are printed).
 loadUserFonts();

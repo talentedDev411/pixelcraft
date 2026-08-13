@@ -6,11 +6,13 @@ import { dom } from './dom.js';
 import { ASPECT_RATIOS, paddingCss, radiusCss, transformCss } from './constants.js';
 import { inGesture, record } from './history.js';
 import {
+    getActivePage,
     getAspectRatio,
     getCanvasHeight,
     getCanvasWidth,
     getElements,
-    getSelectedElementId,
+    getSelectedIds,
+    isSelected,
     setCanvasSize,
 } from './state.js';
 import { findElementById } from './utils.js';
@@ -20,7 +22,9 @@ export function updateCanvasSize() {
     const { canvasArea, canvasWrapper } = dom;
     const ratio = ASPECT_RATIOS[getAspectRatio()];
     const maxW = Math.min(canvasArea.clientWidth - 60, 600);
-    const maxH = canvasArea.clientHeight - 60;
+    // Reserve room for the page track below the canvas.
+    const trackH = dom.pageTrack ? dom.pageTrack.offsetHeight : 0;
+    const maxH = canvasArea.clientHeight - 60 - trackH;
     let w, h;
     if (ratio[0] / ratio[1] > maxW / maxH) {
         w = maxW;
@@ -34,77 +38,125 @@ export function updateCanvasSize() {
     canvasWrapper.style.height = h + 'px';
 }
 
+/**
+ * Build a DOM node for one element model. Shared by the canvas and the page
+ * track thumbnails (scale < 1).
+ *
+ * For thumbnails the node is wrapped in a box whose left/top/width/height are
+ * scaled to the thumb's pixel size, and the inner element is shrunk with a
+ * CSS scale around its top-left corner — so an element lands exactly where it
+ * sits on the real canvas instead of being clipped by the thumb's bounds.
+ */
+export function buildElementDiv(el, { selected = false, scale = 1 } = {}) {
+    const div = document.createElement('div');
+    div.className = `element ${el.type}-element`;
+    if (selected) div.classList.add('selected');
+    div.style.left = el.x + 'px';
+    div.style.top = el.y + 'px';
+    div.style.width = el.width + 'px';
+    div.style.height = el.height + 'px';
+    div.dataset.id = el.id;
+
+    if (el.type === 'text') {
+        div.textContent = el.content;
+        div.style.fontSize = el.fontSize + 'px';
+        div.style.fontWeight = el.fontWeight || '400';
+        div.style.fontFamily = `'${el.fontFamily}', sans-serif`;
+        div.style.color = el.color;
+        div.style.backgroundColor = el.bgColor === 'transparent' ? 'transparent' : el.bgColor;
+        div.style.textShadow = el.textShadow;
+        div.style.borderRadius = radiusCss(el);
+        div.style.padding = paddingCss(el);
+        div.style.transform = transformCss(el);
+    } else if (el.type === 'image') {
+        const img = document.createElement('img');
+        img.src = el.src;
+        img.draggable = false;
+        img.style.objectFit = el.fitMode || 'fill';
+        div.appendChild(img);
+        div.style.transform = transformCss(el);
+    }
+    if (scale !== 1) {
+        // Thumbnail mode: a wrapper pinned to the scaled canvas position.
+        const wrap = document.createElement('div');
+        wrap.className = 'thumb-el';
+        wrap.dataset.id = el.id;
+        wrap.style.left = (el.x * scale) + 'px';
+        wrap.style.top = (el.y * scale) + 'px';
+        wrap.style.width = (el.width * scale) + 'px';
+        wrap.style.height = (el.height * scale) + 'px';
+        div.style.position = 'absolute';
+        div.style.left = '0';
+        div.style.top = '0';
+        div.style.transformOrigin = '0 0';
+        div.style.transform = `scale(${scale}) ${transformCss(el)}`;
+        wrap.appendChild(div);
+        return wrap;
+    }
+    return div;
+}
+
 /** Rebuild every element in the canvas DOM from the current model. */
 export function fullRender() {
     const { designCanvas } = dom;
     designCanvas.innerHTML = '';
-    getElements().forEach(el => {
-        const div = document.createElement('div');
-        div.className = `element ${el.type}-element`;
-        if (el.id === getSelectedElementId()) div.classList.add('selected');
-        div.style.left = el.x + 'px';
-        div.style.top = el.y + 'px';
-        div.style.width = el.width + 'px';
-        div.style.height = el.height + 'px';
-        div.dataset.id = el.id;
+    // The canvas paints the active page's background, and the toolbox swatch
+    // follows it (also after undo/redo restores a different background).
+    const page = getActivePage();
+    const bg = page ? page.bgColor : '#ffffff';
+    designCanvas.style.backgroundColor = bg;
+    if (dom.bgColorInput) dom.bgColorInput.value = bg;
 
-        if (el.type === 'text') {
-            div.textContent = el.content;
-            div.style.fontSize = el.fontSize + 'px';
-            div.style.fontWeight = el.fontWeight || '400';
-            div.style.fontFamily = `'${el.fontFamily}', sans-serif`;
-            div.style.color = el.color;
-            div.style.backgroundColor = el.bgColor === 'transparent' ? 'transparent' : el.bgColor;
-            div.style.textShadow = el.textShadow;
-            div.style.borderRadius = radiusCss(el);
-            div.style.padding = paddingCss(el);
-            div.style.transform = transformCss(el);
-        } else if (el.type === 'image') {
-            const img = document.createElement('img');
-            img.src = el.src;
-            img.draggable = false;
-            img.style.objectFit = el.fitMode || 'fill';
-            div.appendChild(img);
-            div.style.transform = transformCss(el);
-        }
-        designCanvas.appendChild(div);
+    getElements().forEach(el => {
+        designCanvas.appendChild(buildElementDiv(el, { selected: isSelected(el.id) }));
     });
-    if (getSelectedElementId()) applySelectionToDOM(getSelectedElementId());
+    if (getSelectedIds().length) applySelectionToDOM(getSelectedIds());
 }
 
-/** Reflect the current selection in the DOM (handles, edit mode, focus). */
-export function applySelectionToDOM(id) {
+/**
+ * Reflect the current selection in the DOM. Every selected element gets the
+ * outline; only the primary (first) element gets the resize/rotate handles
+ * and — for text — the contenteditable caret.
+ */
+export function applySelectionToDOM(ids) {
     const { designCanvas } = dom;
-    const prevSelected = designCanvas.querySelector('.element.selected');
-    if (prevSelected) {
-        prevSelected.classList.remove('selected');
-        if (prevSelected.classList.contains('text-element')) {
-            prevSelected.setAttribute('contenteditable', 'false');
+    const list = Array.isArray(ids) ? ids : (ids ? [ids] : []);
+    const primary = list[0] || null;
+
+    // Clear previous chrome: outline, edit mode, handles.
+    designCanvas.querySelectorAll('.element.selected').forEach(elDiv => {
+        elDiv.classList.remove('selected');
+        if (elDiv.classList.contains('text-element')) {
+            elDiv.setAttribute('contenteditable', 'false');
         }
-        prevSelected.querySelectorAll('.resize-handle, .rotate-handle').forEach(h => h.remove());
-    }
-    if (!id) return;
-    const elDiv = designCanvas.querySelector(`[data-id="${id}"]`);
-    if (!elDiv) return;
-    elDiv.classList.add('selected');
-    const el = findElementById(getElements(), id);
-    if (el && el.type === 'text') {
-        elDiv.setAttribute('contenteditable', 'true');
-        addResizeHandles(elDiv);
-        addRotateHandle(elDiv);
-        if (document.activeElement !== elDiv) {
-            elDiv.focus();
-            const range = document.createRange();
-            range.selectNodeContents(elDiv);
-            range.collapse(false);
-            const sel = window.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(range);
+        elDiv.querySelectorAll('.resize-handle, .rotate-handle').forEach(h => h.remove());
+    });
+
+    list.forEach(id => {
+        const elDiv = designCanvas.querySelector(`[data-id="${id}"]`);
+        if (!elDiv) return;
+        elDiv.classList.add('selected');
+        const el = findElementById(getElements(), id);
+        if (!el || id !== primary) return;
+        // Primary only: editable text + drag handles.
+        if (el.type === 'text') {
+            elDiv.setAttribute('contenteditable', 'true');
+            addResizeHandles(elDiv);
+            addRotateHandle(elDiv);
+            if (document.activeElement !== elDiv) {
+                elDiv.focus();
+                const range = document.createRange();
+                range.selectNodeContents(elDiv);
+                range.collapse(false);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        } else if (el.type === 'image') {
+            addResizeHandles(elDiv);
+            addRotateHandle(elDiv);
         }
-    } else if (el && el.type === 'image') {
-        addResizeHandles(elDiv);
-        addRotateHandle(elDiv);
-    }
+    });
 }
 
 /** Live-editing: update the model and apply changes to the existing DOM node. */
@@ -181,7 +233,7 @@ export function updateElementModelAndDOM(id, updates, clampToCanvas = false) {
 /** Bootstrap: subscribe to domain events and wire the canvas event delegation. */
 export function initCanvas() {
     on('render', fullRender);
-    on('selection', () => applySelectionToDOM(getSelectedElementId()));
+    on('selection', () => applySelectionToDOM(getSelectedIds()));
 
     // Live text editing happens directly in the canvas (contenteditable).
     // Delegated listener keeps the model in sync without a full re-render,

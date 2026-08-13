@@ -5,21 +5,26 @@
 import { emit } from './bus.js';
 import { dom } from './dom.js';
 import { updateElementModelAndDOM } from './canvas.js';
-import { beginGesture, endGesture } from './history.js';
 import {
     deleteElement,
     duplicateElement,
     moveElementToBack,
     moveElementToFront,
+    moveElementsToPage,
 } from './elements.js';
-import { deselectAll, selectElement } from './selection.js';
+import { beginGesture, endGesture } from './history.js';
+import { getThumbPageIdAt, setDropHighlight } from './pages.js';
+import { deselectAll, selectElement, toggleSelectElement } from './selection.js';
 import {
+    getActivePageId,
     getCanvasHeight,
     getCanvasWidth,
     getElements,
     getSelectedElement,
+    getSelectedIds,
+    isSelected,
 } from './state.js';
-import { findElementById } from './utils.js';
+import { clamp, findElementById } from './utils.js';
 
 /** Wire up drag, resize, click-to-deselect and the context menu. */
 export function initInteractions() {
@@ -36,7 +41,10 @@ export function initInteractions() {
 
     // ── Drag state ──
     let draggedElement = null;
-    let dragOffset = {};
+    let dragStart = { mouseX: 0, mouseY: 0, positions: [] };
+
+    // ── Cross-page drag state (drop onto a page thumbnail) ──
+    let dropTargetPageId = null;
 
     // ── Context menu state ──
     let contextMenuTargetId = null;
@@ -92,19 +100,38 @@ export function initInteractions() {
             return;
         }
         if (draggedElement && !isResizing) {
-            const rect = designCanvas.getBoundingClientRect();
-            const newX = Math.max(0, Math.min(e.clientX - rect.left - dragOffset.x, getCanvasWidth() - draggedElement.width));
-            const newY = Math.max(0, Math.min(e.clientY - rect.top - dragOffset.y, getCanvasHeight() - draggedElement.height));
-            updateElementModelAndDOM(draggedElement.id, { x: newX, y: newY });
+            // Delta from the drag start, clamped so the whole group stays
+            // inside the canvas (single selection behaves identically).
+            const xs = dragStart.positions.map(p => p.x);
+            const rs = dragStart.positions.map(p => p.x + p.w);
+            const dx = clamp(e.clientX - dragStart.mouseX, -Math.min(...xs), getCanvasWidth() - Math.max(...rs));
+            const ys = dragStart.positions.map(p => p.y);
+            const bs = dragStart.positions.map(p => p.y + p.h);
+            const dy = clamp(e.clientY - dragStart.mouseY, -Math.min(...ys), getCanvasHeight() - Math.max(...bs));
+            dragStart.positions.forEach(p => {
+                updateElementModelAndDOM(p.id, { x: p.x + dx, y: p.y + dy });
+            });
             emit('transform', draggedElement.id);
+            // Hovering a page thumbnail while dragging previews a cross-page move.
+            // The highlight is re-applied every frame because the live track
+            // refresh rebuilds the thumbnail nodes while we drag.
+            dropTargetPageId = getThumbPageIdAt(e.clientX, e.clientY);
+            setDropHighlight(dropTargetPageId);
         }
     });
 
     window.addEventListener('mouseup', () => {
+        // Dropping on a thumbnail of a different page moves the whole group.
+        if (draggedElement && dropTargetPageId && dropTargetPageId !== getActivePageId()) {
+            moveElementsToPage(getSelectedIds(), dropTargetPageId);
+        }
         isResizing = false;
         resizeHandle = null;
         isRotating = false;
         draggedElement = null;
+        dragStart = { mouseX: 0, mouseY: 0, positions: [] };
+        dropTargetPageId = null;
+        setDropHighlight(null);
         endGesture();
     });
 
@@ -131,13 +158,28 @@ export function initInteractions() {
         const elementDiv = e.target.closest('.element');
         if (!elementDiv) return;
         const id = elementDiv.dataset.id;
-        selectElement(id);
+        // Ctrl+click toggles membership in the selection (multi-select);
+        // it never starts a drag.
+        if (e.ctrlKey || e.metaKey) {
+            toggleSelectElement(id);
+            return;
+        }
+        // Plain click on an already-selected element keeps the group (group
+        // drag); a click on an unselected element narrows to it alone.
+        if (!isSelected(id)) selectElement(id);
         draggedElement = findElementById(getElements(), id);
         if (!draggedElement) return;
         beginGesture(); // one undo step for the whole drag
-        const rect = designCanvas.getBoundingClientRect();
-        dragOffset.x = e.clientX - rect.left - draggedElement.x;
-        dragOffset.y = e.clientY - rect.top - draggedElement.y;
+        dragStart = {
+            mouseX: e.clientX,
+            mouseY: e.clientY,
+            positions: getSelectedIds()
+                .map(sid => {
+                    const el = findElementById(getElements(), sid);
+                    return el ? { id: sid, x: el.x, y: el.y, w: el.width, h: el.height } : null;
+                })
+                .filter(Boolean),
+        };
         e.preventDefault();
     });
 

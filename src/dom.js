@@ -19,8 +19,16 @@ export const dom = {
     canvasWrapper: document.getElementById('canvasWrapper'),
     designCanvas: document.getElementById('designCanvas'),
 
+    // Page track (multi-canvas)
+    pageTrack: document.getElementById('pageTrack'),
+    pageThumbs: document.getElementById('pageThumbs'),
+    addPageBtn: document.getElementById('addPageBtn'),
+    clonePageBtn: document.getElementById('clonePageBtn'),
+    deletePageBtn: document.getElementById('deletePageBtn'),
+
     // Properties panel
     noSelection: document.getElementById('noSelection'),
+    multiSelectionNote: document.getElementById('multiSelectionNote'),
     positionProperties: document.getElementById('positionProperties'),
     positionXInput: document.getElementById('positionXInput'),
     positionYInput: document.getElementById('positionYInput'),

@@ -13,6 +13,7 @@ import {
     getCanvasWidth,
     getSelectedElement,
     getSelectedElementId,
+    getSelectedIds,
 } from './state.js';
 import { clamp } from './utils.js';
 
@@ -115,14 +116,18 @@ function syncTransformInputs(el) {
 
 export function updatePropertiesPanel() {
     const el = getSelectedElement();
+    const count = getSelectedIds().length;
     if (!el) {
         dom.noSelection.style.display = 'block';
+        dom.multiSelectionNote.style.display = 'none';
         dom.positionProperties.style.display = 'none';
         dom.textProperties.style.display = 'none';
         dom.imageProperties.style.display = 'none';
         return;
     }
     dom.noSelection.style.display = 'none';
+    dom.multiSelectionNote.style.display = count > 1 ? 'block' : 'none';
+    dom.multiSelectionNote.textContent = `${count} elements selected — edits apply to the first one`;
     dom.positionProperties.style.display = 'block';
     syncTransformInputs(el);
     if (el.type === 'text') {

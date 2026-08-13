@@ -10,9 +10,9 @@
 //   Ctrl+X / Ctrl+C / Ctrl+V        cut / copy / paste the selected element
 //   Delete / Backspace              delete the selected element
 
-import { clearClipboard, copyElement, cutElement, deleteElement, pasteElement } from './elements.js';
+import { clearClipboard, copyElement, cutElement, deleteSelectedElements, pasteElement } from './elements.js';
 import { redo, undo } from './history.js';
-import { getSelectedElementId } from './state.js';
+import { getSelectedIds } from './state.js';
 
 /** True when focus is in a plain form field (properties panel inputs). */
 function isFormField(target) {
@@ -55,13 +55,13 @@ export function initShortcuts() {
             return;
         }
 
-        // Delete / Backspace removes the selected element — unless the user is
-        // typing inside a text element (then the key deletes characters).
+        // Delete / Backspace removes the selected element(s) — unless the user
+        // is typing inside a text element (then the key deletes characters).
         if (!mod && (e.key === 'Delete' || e.key === 'Backspace')) {
             if (isInTextElement(target)) return;
-            if (getSelectedElementId()) {
+            if (getSelectedIds().length) {
                 e.preventDefault();
-                deleteElement(getSelectedElementId());
+                deleteSelectedElements();
             }
             return;
         }

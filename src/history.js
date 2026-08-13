@@ -1,6 +1,7 @@
 // Undo/redo history for user actions. Every meaningful mutation records a
-// snapshot of the whole element list; Ctrl+Z / Ctrl+Y (or Ctrl+Shift+Z) step
-// through the snapshots like a text field steps through its edits.
+// snapshot of the whole document (all pages + their elements); Ctrl+Z /
+// Ctrl+Y (or Ctrl+Shift+Z) step through the snapshots like a text field
+// steps through its edits.
 //
 // Snapshots are JSON strings, so dedup (pushing the same state twice in a
 // row) is a cheap string compare. Continuous gestures (drag / resize /
@@ -10,9 +11,10 @@
 import { emit } from './bus.js';
 import {
     getElements,
-    getSelectedElementId,
-    setElements,
-    setSelectedElementId,
+    getPagesState,
+    getSelectedIds,
+    setPagesState,
+    setSelectedIds,
 } from './state.js';
 
 /** Maximum number of undo steps kept in memory (each is a JSON snapshot). */
@@ -23,9 +25,9 @@ const redoStack = [];
 
 let gesturing = false;
 
-/** Serialize the current element list for storage on a stack. */
+/** Serialize the whole document (pages + active page) for storage. */
 function snapshot() {
-    return JSON.stringify(getElements());
+    return JSON.stringify(getPagesState());
 }
 
 /** Restore a snapshot and re-render, keeping the selection valid. */
@@ -34,9 +36,10 @@ function restore(snap) {
     // survives the re-render; canvas nodes are rebuilt, so their focus is
     // re-applied by applySelectionToDOM instead.
     const prevFocus = document.activeElement;
-    setElements(JSON.parse(snap));
-    const selId = getSelectedElementId();
-    if (selId && !getElements().some(el => el.id === selId)) setSelectedElementId(null);
+    const parsed = JSON.parse(snap);
+    setPagesState(parsed.pages, parsed.activePageId);
+    // Drop any selected ids that no longer exist after the restore.
+    setSelectedIds(getSelectedIds().filter(id => getElements().some(el => el.id === id)));
     emit('render');
     if (prevFocus && prevFocus !== document.body && prevFocus.isConnected) prevFocus.focus();
 }

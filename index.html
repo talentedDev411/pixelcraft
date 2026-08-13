@@ -48,11 +48,20 @@
             <div class="canvas-wrapper" id="canvasWrapper">
                 <div class="canvas" id="designCanvas"></div>
             </div>
+            <div class="page-track" id="pageTrack">
+                <div class="page-track-thumbs" id="pageThumbs"></div>
+                <div class="page-track-actions">
+                    <button class="page-btn" id="addPageBtn" title="Add a new page">＋ Add</button>
+                    <button class="page-btn" id="clonePageBtn" title="Clone this page with its contents">⧉ Clone</button>
+                    <button class="page-btn" id="deletePageBtn" title="Delete this page">🗑 Delete</button>
+                </div>
+            </div>
         </div>
 
         <div class="properties-panel" id="propertiesPanel">
             <h3>Properties</h3>
             <div id="noSelection" class="empty-state">Select an element to edit</div>
+            <div id="multiSelectionNote" class="multi-selection-note" style="display:none;"></div>
             <div id="positionProperties" style="display:none;">
                 <div class="property-group">
                     <label>Position &amp; Size (px)</label>

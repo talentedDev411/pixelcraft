@@ -6,10 +6,14 @@ import { emit } from './bus.js';
 import { ELEMENT_DEFAULTS, MAX_IMAGE_DIM } from './constants.js';
 import { record } from './history.js';
 import {
+    getActivePage,
     getCanvasHeight,
     getCanvasWidth,
     getElements,
+    getPageById,
     getSelectedElementId,
+    getSelectedIds,
+    setActivePageId,
     setElements,
 } from './state.js';
 import { clamp, findElementById, generateId } from './utils.js';
@@ -101,28 +105,38 @@ export function moveElementToBack(id) {
     selectElement(el.id);
 }
 
-// ── Cut / copy / paste (same-session clipboard) ──
+// ── Cut / copy / paste (same-session clipboard, supports multi-select) ──
 
-/** Internal clipboard holding the last cut/copied element, if any. */
+/** Internal clipboard holding the last cut/copied elements, if any. */
 let clipboard = null;
 
-/** Remove the selected element and remember it for Ctrl+V (Ctrl+X). */
-export function cutElement(id = getSelectedElementId()) {
-    const el = findElementById(getElements(), id);
-    if (!el) return false;
+/** The ids of every currently selected element, or null when none. */
+function selectedIdsOrNull() {
+    const ids = getSelectedIds();
+    return ids.length ? ids : null;
+}
+
+/** Remove the selected element(s) and remember them for Ctrl+V (Ctrl+X). */
+export function cutElement(id) {
+    const ids = id ? [id] : selectedIdsOrNull();
+    if (!ids) return false;
+    const els = ids.map(i => findElementById(getElements(), i)).filter(Boolean);
+    if (!els.length) return false;
     record();
-    clipboard = { element: structuredClone(el), pasteCount: 0 };
-    setElements(getElements().filter(e => e.id !== id));
-    if (getSelectedElementId() === id) deselectAll();
+    clipboard = { elements: els.map(e => structuredClone(e)), pasteCount: 0 };
+    setElements(getElements().filter(e => !ids.includes(e.id)));
+    deselectAll();
     emit('render');
     return true;
 }
 
-/** Remember the selected element for Ctrl+V without removing it (Ctrl+C). */
-export function copyElement(id = getSelectedElementId()) {
-    const el = findElementById(getElements(), id);
-    if (!el) return false;
-    clipboard = { element: structuredClone(el), pasteCount: 0 };
+/** Remember the selected element(s) for Ctrl+V without removing them (Ctrl+C). */
+export function copyElement(id) {
+    const ids = id ? [id] : selectedIdsOrNull();
+    if (!ids) return false;
+    const els = ids.map(i => findElementById(getElements(), i)).filter(Boolean);
+    if (!els.length) return false;
+    clipboard = { elements: els.map(e => structuredClone(e)), pasteCount: 0 };
     return true;
 }
 
@@ -132,23 +146,56 @@ export function clearClipboard() {
 }
 
 /**
- * Paste the clipped element, nudged away from the original spot each time
- * so repeats stay visible. Returns true when an element was pasted.
+ * Paste the clipped element(s), nudged away from the original spot each time
+ * so repeats stay visible. Returns true when anything was pasted.
  */
 export function pasteElement() {
-    if (!clipboard) return false;
+    if (!clipboard || !clipboard.elements.length) return false;
     record();
-    const src = clipboard.element;
     const step = 20 * (clipboard.pasteCount + 1);
-    const copy = {
+    const copies = clipboard.elements.map(src => ({
         ...src,
         id: generateId(),
         x: clamp(src.x + step, 0, Math.max(0, getCanvasWidth() - src.width)),
         y: clamp(src.y + step, 0, Math.max(0, getCanvasHeight() - src.height)),
-    };
-    setElements([...getElements(), copy]);
+    }));
+    setElements([...getElements(), ...copies]);
     emit('render');
-    selectElement(copy.id);
+    selectElement(copies[0].id);
     clipboard.pasteCount += 1;
+    return true;
+}
+
+/** Delete every selected element (used by the Delete/Backspace shortcut). */
+export function deleteSelectedElements() {
+    const ids = getSelectedIds();
+    if (!ids.length) return false;
+    record();
+    setElements(getElements().filter(e => !ids.includes(e.id)));
+    deselectAll();
+    emit('render');
+    return true;
+}
+
+/**
+ * Move an element from the active page onto another page (drag-to-thumbnail).
+ * Switches to the target page and keeps the element selected.
+ */
+export function moveElementToPage(id, targetPageId) {
+    return moveElementsToPage([id], targetPageId);
+}
+
+/** Move every given element (all selected) onto another page together. */
+export function moveElementsToPage(ids, targetPageId) {
+    const srcPage = getActivePage();
+    const els = ids.map(i => findElementById(srcPage ? srcPage.elements : [], i)).filter(Boolean);
+    const target = getPageById(targetPageId);
+    if (!srcPage || !els.length || !target || target.id === srcPage.id) return false;
+    record();
+    const idSet = new Set(els.map(el => el.id));
+    srcPage.elements = srcPage.elements.filter(e => !idSet.has(e.id));
+    target.elements = [...target.elements, ...els];
+    setActivePageId(target.id);
+    emit('render'); // renders the target page; the selection ids are unchanged
     return true;
 }
