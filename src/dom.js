@@ -6,6 +6,9 @@ export const dom = {
     aspectBtns: Array.from(document.querySelectorAll('.aspect-btn')),
     clearCanvasBtn: document.getElementById('clearCanvasBtn'),
     exportBtn: document.getElementById('exportBtn'),
+    exportDropdown: document.getElementById('exportDropdown'),
+    exportMenu: document.getElementById('exportMenu'),
+    exportMenuItems: Array.from(document.querySelectorAll('.export-menu-item')),
 
     // Toolbox
     addTextTool: document.getElementById('addTextTool'),

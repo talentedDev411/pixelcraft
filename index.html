@@ -27,7 +27,28 @@
         </div>
         <div class="actions">
             <button class="btn btn-outline" id="clearCanvasBtn">🗑️ Clear</button>
-            <button class="btn btn-primary" id="exportBtn">📤 Export</button>
+            <div class="export-dropdown" id="exportDropdown">
+                <button class="btn btn-primary" id="exportBtn" title="Export your design">📤 Export ▾</button>
+                <div class="export-menu" id="exportMenu" style="display:none;">
+                    <div class="export-menu-label">Export</div>
+                    <div class="export-menu-item" data-action="current">
+                        <span>🖼️</span>
+                        <div><div class="export-menu-title">Current Canvas</div><div class="export-menu-hint">This page as a PNG</div></div>
+                    </div>
+                    <div class="export-menu-item" data-action="all">
+                        <span>🗂️</span>
+                        <div><div class="export-menu-title">All Pages</div><div class="export-menu-hint">One PNG per page</div></div>
+                    </div>
+                    <div class="export-menu-item" data-action="zip">
+                        <span>🗜️</span>
+                        <div><div class="export-menu-title">ZIP</div><div class="export-menu-hint">All page images in a .zip</div></div>
+                    </div>
+                    <div class="export-menu-item" data-action="pdf">
+                        <span>📄</span>
+                        <div><div class="export-menu-title">PDF</div><div class="export-menu-hint">All pages in one document</div></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
