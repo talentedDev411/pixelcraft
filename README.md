@@ -2,7 +2,7 @@
 
 A **web‑based, Canva‑style image editor** for designing social media carousels, posts, and visual content directly in your browser. No sign‑up, no backend – everything runs client‑side.
 
-Built with vanilla HTML, CSS, and JavaScript (ES modules), this editor lets you combine images and text on a flexible canvas, adjust aspect ratios, and export your creation as a high‑resolution PNG image.
+Built with vanilla HTML, CSS, and JavaScript (ES modules), this editor lets you combine images and text on a flexible multi‑page canvas, adjust aspect ratios, and export your creation as high‑resolution PNG images, a ZIP archive, or a PDF document.
 
 ---
 
@@ -83,15 +83,22 @@ Built with vanilla HTML, CSS, and JavaScript (ES modules), this editor lets you 
   - **🗑 Delete** – removes the current page (never the last one) and switches to a neighbour.
 - **Drag an element (or a multi‑selected group) to another page** – grab it and drag onto a page thumbnail in the track (the target thumbnail highlights); releasing moves everything to that page and switches you over.
 - All page operations (add, clone, delete, move‑across) are **undoable** with Ctrl+Z.
-- **Export** always captures the currently active page.
+- **Export** – the dropdown can export just the active page, or every page as separate PNGs / a ZIP / a PDF.
 
 ### Background & Canvas Settings
 - **Custom background colour** – choose any solid color for the canvas using the toolbox colour picker. The color is stored **per page**, so each canvas keeps its own background.
 
 ### Export
-- **Export to PNG** – download your design as a high‑resolution (2×) image with the click of a button.
-- All elements (text, images, shadows) are captured exactly as they appear on screen.
-- Selection outlines, side lines, resize handles, and text highlights are hidden (and transitions suppressed) during capture, so none of the editor's selection colors leak into the download — for every element type.
+
+Click the **📤 Export ▾** dropdown in the top bar to pick from four options:
+- **🖼️ Current Canvas** – the active page as a high‑resolution (2×) PNG.
+- **🗂️ All Pages** – every page rendered as its own PNG, downloaded one by one (`page-1.png`, `page-2.png`, …).
+- **🗜️ ZIP** – all page PNGs wrapped in a single `.zip` archive.
+- **📄 PDF** – all pages in one document, sized to the canvas aspect ratio.
+
+Every page is rendered from its model into an offscreen node (same renderer as the canvas and thumbnails), so exporting never disturbs the live canvas, the current page, or the selection — pages don't need to be visited to export them.
+
+All elements (text, images, shadows) are captured exactly as they appear on screen. Selection outlines, side lines, resize handles, and text highlights are hidden (and transitions suppressed) during capture, so none of the editor's selection colors leak into the download — for every element type.
 
 ---
 
@@ -126,7 +133,7 @@ npm run preview   # serve the production build locally
    - Use the **right‑click menu** to bring forward/send backward, duplicate, delete, or change image fit mode.
    - Use the **properties panel** on the right to change text content, font size, colours, shadow, or swap images.
 4. **Work with pages**: use the **page track** under the canvas to add, clone (with contents) or delete pages; click a thumbnail to navigate; drag an element onto another page's thumbnail to move it there.
-5. **Export** – click the **Export** button in the top bar to download the active page as a PNG.
+5. **Export** – click the **📤 Export ▾** dropdown in the top bar: export the current canvas as a PNG, all pages as individual PNGs, everything as a ZIP, or a single PDF.
 
 ---
 
@@ -136,7 +143,7 @@ npm run preview   # serve the production build locally
 |--------------|-------------------------------------|
 | **Frontend** | HTML5, CSS3, Vanilla JavaScript (ES modules) |
 | **Build**    | [Vite](https://vitejs.dev/)         |
-| **Export**   | [html-to-image](https://github.com/bubkoo/html-to-image) (npm package) |
+| **Export**   | [html-to-image](https://github.com/bubkoo/html-to-image), [JSZip](https://stuk.github.io/jszip/), [jsPDF](https://github.com/parallax/jsPDF) (npm packages) |
 | **Images**   | Local file uploads (Data URIs, no server required) |
 
 ---
@@ -174,7 +181,7 @@ grow and be tested independently.
     ├── shortcuts.js           # Global keyboard shortcuts (undo/redo, cut/copy/paste)
     ├── properties.js          # Right‑hand properties panel
     ├── fonts.js               # Custom font registry, manifest loading, import
-    └── export.js              # High‑resolution PNG export via html-to-image
+    └── export.js              # Export dropdown: PNG, all pages, ZIP, PDF
 ```
 
 ### Architecture notes
