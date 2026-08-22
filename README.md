@@ -66,10 +66,16 @@ Built with vanilla HTML, CSS, and JavaScript (ES modules), this editor lets you 
 
 - **SVG picker modal** — click the **🔷 SVG** button in the toolbox to open a library of pre-built SVG icons.
 - **Multi-select** — click SVGs to toggle them on/off; a count badge shows how many are selected.
-- **Grid reordering** — selected items move to the top of their category; deselected items return to alphabetical order.
-- **Live preview** — the last-clicked SVG appears large in the preview area at the top of the modal.
-- **Category-driven JSON** — SVGs are stored in `src/svg-data.json` with categories as top-level keys (e.g. `{ "arrows": { ... } }`). Adding a new category means adding a new key — no code changes needed.
-- **Recolorable** — placed SVGs have a **fill color picker** in the properties panel. Change the color, and the SVG updates live. A **↺ Reset** button restores the original color.
+- **Preview bar** — every selected SVG appears as a **40px thumbnail** in the preview area at the top of the modal; deselecting removes the corresponding thumbnail.
+- **Category tabs** — filter by category (All, Arrows, Abstract Geometrics) with tab buttons; selected items stay visible at the top of their grid.
+- **Category-driven JSON** — SVGs are stored in `resources/svgs/` with categories as top-level keys (e.g. `{ "arrows": { ... } }`). Adding a new category means adding a new JSON file — no code changes needed.
+- **Hex color inputs** — SVG Fill Color and Gradient Color pickers each have a **hex text input** beside them. Type a hex value directly, or pick from the color picker — both directions sync instantly.
+- **SVG shape controls**:
+  - **Stroke Width** (0–50) — injects stroke into the SVG markup
+  - **Blur X/Y** (0–80) — applies SVG `<feGaussianBlur>` filter
+  - **Ghost effects** — a duplicate SVG layer with independent **Blur X/Y** (0–100), **Offset X/Y**, and **Opacity** for glow/shadow aesthetics
+- **2-color gradient** — fill color + gradient color with **angle** (0–360°), **opacity** control, and a **Gradient CSS** text box for import/export. Paste any `linear-gradient(...)` string to apply, or copy the generated CSS.
+- **Recolorable** — placed SVGs have a **fill color picker** in the properties panel. Change the color, and the SVG updates live on all fill formats (inline attributes, CSS style blocks, display-p3). A **↺ Reset All** button restores everything to defaults.
 - **Full integration** — placed SVGs can be dragged, resized, rotated, duplicated, layered, and exported like any other element.
 
 ### Layering & Organisation
@@ -105,8 +111,16 @@ Built with vanilla HTML, CSS, and JavaScript (ES modules), this editor lets you 
 
 ### Export
 
-Click the **📤 Export ▾** dropdown in the top bar to pick from four options:
-- **🖼️ Current Canvas** – the active page as a high‑resolution (2×) PNG.
+Click the **📤 Export ▾** dropdown in the top bar to pick quality and output:
+
+**Quality selector** (top of dropdown):
+- **HD** – 720p, 2× pixel ratio
+- **FHD** – 1080p, 3× pixel ratio (default)
+- **2K** – 1440p, 4× pixel ratio
+- **4K** – 2160p, 7× pixel ratio
+
+**Export options:**
+- **🖼️ Current Canvas** – the active page as a high‑resolution PNG.
 - **🗂️ All Pages** – every page rendered as its own PNG, downloaded one by one (`page-1.png`, `page-2.png`, …).
 - **🗜️ ZIP** – all page PNGs wrapped in a single `.zip` archive.
 - **📄 PDF** – all pages in one document, sized to the canvas aspect ratio.
@@ -176,8 +190,11 @@ grow and be tested independently.
 ├── vite.config.js             # Vite config + user‑font import API plugin
 ├── resources/
 │   ├── fonts/                 # Bundled brand‑style font families (@font-face)
-│   ├── svgs/arrows/           # SVG icons organized by category (JSON)
-│   │   └── svg-data.json      # { "arrows": { "arrow-01": "<svg>..." } }
+│   ├── svgs/
+│   │   ├── arrows/             # Arrow SVGs (JSON)
+│   │   │   └── arrow-svg.json  # { "arrows": { "arrow-01": "<svg>..." } }
+│   │   └── abstract_geometrics/ # Geometric shape SVGs (JSON)
+│   │       └── abstract-geometric-svg.json
 │   └── user/fonts/            # Imported custom fonts + manifest.json
 ├── scripts/
 │   ├── download-fonts.mjs     # Re‑download the bundled families (npm run fonts)
