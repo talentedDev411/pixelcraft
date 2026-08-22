@@ -624,43 +624,113 @@ in `src/`, subdivided by feature. Path aliases eliminate the brittle `../../`
 chains that break every time a file moves.
 
 
+### 18. SVG shape controls — stroke, blur, ghost effects, and 2-color gradient
+
+**The problem:** SVGs placed on the canvas were flat — just a fill color. The
+reference file `svg_shape_controls.html` demonstrated advanced visual effects
+(stroke width, separate X/Y blur, ghost glow layer with offset and opacity)
+that made SVGs look professional. The geometric SVGs also used different fill
+formats (`display-p3`, CSS class blocks) that the original `recolorSvg()`
+couldn't handle.
+
+**What was done:**
+- Added **8 slider controls** to the SVG properties panel: Stroke Width (0–50),
+  Blur X/Y (0–80), Ghost Blur X/Y (0–100), Ghost Offset X/Y (-100 to 100),
+  Ghost Opacity (0–1).
+- Rewrote `recolorSvg()` to handle **all fill formats**:
+  - Inline `fill="#hex"` attributes
+  - CSS `<style>.cls-1{fill:#hex;}</style>` blocks
+  - `fill="color(display-p3 ...)"` format used by geometric SVGs
+- Ghost layer: injects an SVG `<filter>` with `<feGaussianBlur>` for separate
+  X/Y blur values (CSS `blur()` only accepts one value — impossible to do
+  separate X/Y).
+- Added **2-color gradient** system: Fill Color (start) + Gradient Color (end)
+  with angle (0–360°), opacity, and a **Gradient CSS text box** for
+  import/export of `linear-gradient(...)` strings.
+- Injected `<linearGradient>` into SVG `<defs>` with proper angle-to-coordinates
+  math for rendering.
+
+**Key insight:** SVG fill colors come in wildly different formats (inline
+attributes, CSS classes, display-p3 color functions). A robust recolor function
+must regex-replace all non-`none`/non-`url()` fill values, not just one
+format. And for blur effects that need separate X/Y, CSS is insufficient —
+you must inject SVG `<filter>` elements directly into the data URL.
+
+**Files involved:**
+- `src/canvas/canvas.js` — `recolorSvg()` rewrite, ghost layer creation
+- `src/properties/properties.js` — slider event wiring, gradient compose/parse
+- `src/svg/svg-picker.js` — default property values on element creation
+- `index.html` — 8 slider controls, gradient section, CSS text box
+
+
+### 19. Export quality selector — HD / FHD / 2K / 4K presets
+
+**The problem:** Exported PNGs appeared blurry — the hardcoded `EXPORT_PIXEL_RATIO`
+of 2× wasn't enough for complex SVGs with embedded filters and gradients.
+Users needed control over output resolution depending on their use case
+(social media vs. print).
+
+**What was done:**
+- Replaced the single `EXPORT_PIXEL_RATIO = 3` constant with
+  `EXPORT_QUALITY_PRESETS` array: HD (2×), FHD (3×), 2K (4×), 4K (7×).
+- Added a **quality selector row** at the top of the export dropdown with 4
+  buttons — FHD selected by default.
+- Quality persists for the session and applies to all export formats (PNG,
+  All Pages, ZIP, PDF).
+- Added `image-rendering: -webkit-optimize-contrast` to the export capture to
+  prevent browser softening when upscaling SVG data URLs.
+
+**Key insight:** Export resolution is a UX decision, not just a technical one.
+A single "Export" button hides the tradeoff between file size and quality.
+Making it explicit with labeled presets (HD/FHD/2K/4K) lets the user choose
+without understanding pixel ratios.
+
+
+### 20. SVG preview rewrite — 40px thumbnails and mobile responsiveness
+
+**The problem:** The preview area showed only the last-clicked SVG as a single
+large image. When multi-selecting, there was no visual feedback for all the
+selected items. The cell sizes also jumped between default (30px) and selected
+(50px) states, causing a disorienting layout shift.
+
+**What was done:**
+- Rewrote `updatePreview()` to populate `svg-picker-preview-label` with
+  **all selected SVGs** as **40px thumbnails** in a flex-wrapped row.
+- Removed the old single `previewImg` element entirely.
+- Standardized cell size to **50×50 with 40px icons** — selected state only
+  changes the **border color** (no size change, no layout shift).
+- Made the entire SVG picker modal **responsive for mobile**:
+  - Full-screen on ≤768px (no border-radius, fills viewport)
+  - Tabs, grid cells, thumbnails, and buttons all scale down proportionally
+  - Grid cells: 44px on mobile (50px on desktop), thumbnails: 36px (40px)
+
+**Key insight:** Preview and grid sizing should be **stable** — the selected
+state should not cause layout reflow. A consistent 50×50 cell with only
+border-color change is less jarring than a size-jump animation. For mobile,
+modals need to go full-screen because 90vw is still too wide on a 375px
+viewport.
+
+
+### 21. Bidirectional hex color inputs for SVG properties
+
+**The problem:** Color pickers only show a small swatch — users couldn't see
+the exact hex value or paste a known color code. There was no way to input
+a specific color without opening the native color picker dialog.
+
+**What was done:**
+- Added **hex text inputs** (`#rrggbb`) next to both the SVG Fill Color and
+  Gradient Color pickers.
+- **Bidirectional sync**: changing the color picker updates the hex text; typing
+  a valid hex in the text updates the color picker. Both apply to the SVG live.
+- **Validation on blur**: invalid hex values snap back to the model's current
+  value, preventing broken states.
+- Reset buttons also clear the hex inputs to defaults.
+
+**Key insight:** Color inputs need two affordances — visual (picker) and
+textual (hex field). Users who know their brand colors want to type `#7C5CFC`
+directly; users exploring want the picker. Both should always stay in sync.
+
+
 ## Recurring theme (worth remembering)
 
 Most of these struggles were one of **three things**:
-
-1. **Misreading the requirement.** "Remove background" was the text section,
-   not the canvas. The fix wasn't more engineering — it was reading the user's
-   words precisely, reverting the wrong build fast, and shipping the small
-   correct one. When in doubt, build the smallest thing that matches the exact
-   sentence.
-2. **Silent invalidity and silent drift.** A 4-length `text-shadow` was
-   *valid-looking* but dropped whole by the browser; three shadow UIs drifted
-   because there was no single source of truth; a stale element clipboard
-   pasted the wrong thing. The pattern: **one source of truth (the model),
-   everything else derived, and invalid input degraded explicitly** — never
-   silently.
-3. **Context blindness in global behavior.** Global shortcuts and export
-   capture treat every state the same and break text editing or leak editor
-   chrome. The fix is context detection and hiding, not more special cases.
-4. **Two coordinate spaces, one model.** The thumbnail bug was the classic
-   “scaled preview” trap: shrinking the *content* without scaling the
-   *layout box* (`left/top/width/height`) clips and misplaces everything.
-   Whenever a preview or export renders the model at a different size, scale
-   the box and the content together. And dev tools can bite too: many edits
-   across modules left Vite’s HMR with duplicate state instances (dynamic
-   imports saw a different `state.js`), which only a clean dev-server restart
-   cured.
-5. **One model, many render surfaces.** The canvas, the page thumbnails and
-   every export are just surfaces for the same element models. Each new
-   surface (thumbnails, per-page export) was the fix *reusing* the shared
-   `buildElementDiv` instead of duplicating layout logic — and the two
-   real rendering bugs in this project (unscaled thumbnails, selection chrome
-   leaking into PNGs) both came from surfaces that had drifted off that
-   shared path.
-
-The single highest-value debugging move was running the real dev server and
-driving real input events end-to-end. That's how the undo chains, focus
-retention, and clipboard fallbacks were proven — and it's also where one
-testing trap surfaced: **undo/redo re-renders replace every DOM node**, so a
-captured element reference goes stale after each step; always re-query the DOM
-fresh after a re-render instead of reusing old handles.
