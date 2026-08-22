@@ -56,6 +56,12 @@ Built with vanilla HTML, CSS, and JavaScript (ES modules), this editor lets you 
 - **Copy / Cut / Paste the group** in one shot — Ctrl+C / Ctrl+X / Ctrl+V duplicates or moves every selected element, and Delete removes them all.
 - The first selected element stays the **primary** (it keeps the resize/rotate handles and drives the properties panel — edits there apply to it).
 
+### Marquee Selection (click-drag)
+- **Draw a selection rectangle** — click and drag on the empty canvas area to draw a dashed purple marquee box.
+- **Select all in range** — on release, every element whose bounds overlap the rectangle gets selected.
+- **Combine with Ctrl+Click** — marquee selects a group, then Ctrl+Click individual elements to add or remove from the selection.
+- The marquee is **stable** — no size jumps, no layout shift, just a clean dashed border with a semi-transparent fill.
+
 ### Select Mode (mobile-friendly copy/paste)
 - **Select tool** in the left toolbox has two states — off, or **active** (darker background) — and while active a small **Copy / Paste menu** appears right next to the button.
 - **Tap elements** to toggle them in/out of the selection (taps never start a drag or pop the keyboard) — the mobile equivalent of Ctrl+click.
