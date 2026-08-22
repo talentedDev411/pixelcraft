@@ -62,6 +62,16 @@ Built with vanilla HTML, CSS, and JavaScript (ES modules), this editor lets you 
 - **Copy** becomes selectable once at least one element is selected; clicking it copies the whole selection and turns it off while **Paste** lights up (repeatable — each paste steps away from the original spot).
 - **Cancellable** — tap the Select tool again (or press **Esc**): if nothing was pasted yet the selected components are dropped; after a paste, exiting just keeps the result.
 
+### SVG Library
+
+- **SVG picker modal** — click the **🔷 SVG** button in the toolbox to open a library of pre-built SVG icons.
+- **Multi-select** — click SVGs to toggle them on/off; a count badge shows how many are selected.
+- **Grid reordering** — selected items move to the top of their category; deselected items return to alphabetical order.
+- **Live preview** — the last-clicked SVG appears large in the preview area at the top of the modal.
+- **Category-driven JSON** — SVGs are stored in `src/svg-data.json` with categories as top-level keys (e.g. `{ "arrows": { ... } }`). Adding a new category means adding a new key — no code changes needed.
+- **Recolorable** — placed SVGs have a **fill color picker** in the properties panel. Change the color, and the SVG updates live. A **↺ Reset** button restores the original color.
+- **Full integration** — placed SVGs can be dragged, resized, rotated, duplicated, layered, and exported like any other element.
+
 ### Layering & Organisation
 - **Drag** any element (text or image) freely on the canvas — or drag a multi‑selected group together.
 - **Bring to front / Send to back** via right‑click context menu.
@@ -84,6 +94,11 @@ Built with vanilla HTML, CSS, and JavaScript (ES modules), this editor lets you 
 - **Drag an element (or a multi‑selected group) to another page** – grab it and drag onto a page thumbnail in the track (the target thumbnail highlights); releasing moves everything to that page and switches you over.
 - All page operations (add, clone, delete, move‑across) are **undoable** with Ctrl+Z.
 - **Export** – the dropdown can export just the active page, or every page as separate PNGs / a ZIP / a PDF.
+
+### Documentation
+
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** — developer guide with setup, conventions, architecture principles, and how to add new element types.
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** — detailed module documentation covering state management, event bus, canvas system, SVG system, export pipeline, and extension points.
 
 ### Background & Canvas Settings
 - **Custom background colour** – choose any solid color for the canvas using the toolbox colour picker. The color is stored **per page**, so each canvas keeps its own background.
@@ -161,40 +176,71 @@ grow and be tested independently.
 ├── vite.config.js             # Vite config + user‑font import API plugin
 ├── resources/
 │   ├── fonts/                 # Bundled brand‑style font families (@font-face)
+│   ├── svgs/arrows/           # SVG icons organized by category (JSON)
+│   │   └── svg-data.json      # { "arrows": { "arrow-01": "<svg>..." } }
 │   └── user/fonts/            # Imported custom fonts + manifest.json
 ├── scripts/
 │   ├── download-fonts.mjs     # Re‑download the bundled families (npm run fonts)
 │   └── user-fonts-plugin.mjs  # Dev server API: save/validate/serve custom fonts
 └── src/
     ├── main.js                # Composition root: boots modules & wires top‑bar UI
-    ├── constants.js           # Aspect ratios, font list, shadow presets, defaults
-    ├── utils.js               # generateId, clamp, findElementById
-    ├── state.js               # Central app state (pages, elements, selection, canvas size)
-    ├── pages.js               # Multi‑canvas: page track, add/clone/delete/switch, thumbnails
-    ├── bus.js                 # Tiny pub/sub event bus ('render', 'selection', …)
-    ├── dom.js                 # Central DOM reference registry
-    ├── canvas.js              # Canvas sizing, rendering, model↔DOM sync
-    ├── selection.js           # Select/deselect operations
-    ├── elements.js            # Element factories (text, image) & structure ops
-    ├── interactions.js        # Drag, resize, rotate, right‑click context menu
-    ├── history.js             # Undo/redo snapshot stacks for user actions
-    ├── shortcuts.js           # Global keyboard shortcuts (undo/redo, cut/copy/paste)
-    ├── properties.js          # Right‑hand properties panel
-    ├── fonts.js               # Custom font registry, manifest loading, import
-    └── export.js              # Export dropdown: PNG, all pages, ZIP, PDF
+    ├── core/                  # App shell: state, events, DOM registry, constants
+    │   ├── bus.js             # Tiny pub/sub event bus ('render', 'selection', …)
+    │   ├── state.js           # Central app state (pages, elements, selection)
+    │   ├── dom.js             # Central DOM reference registry
+    │   ├── constants.js       # Aspect ratios, font list, shadow presets, defaults
+    │   └── utils.js           # generateId, clamp, findElementById
+    ├── canvas/                # Canvas sizing, rendering, model↔DOM sync
+    │   └── canvas.js          # fullRender, buildElementDiv, recolorSvg
+    ├── elements/              # Element CRUD (add, delete, duplicate, paste)
+    │   └── elements.js        # Factories for text, image, svg elements
+    ├── interactions/          # Drag, resize, rotate, context menu
+    │   └── interactions.js    # Pointer events + gesture tracking
+    ├── selection/             # Select / deselect / select mode
+    │   ├── selection.js       # selectElement, toggleSelect, deselectAll
+    │   └── selectmode.js      # Mobile-friendly tap-to-select mode
+    ├── history/               # Undo / redo snapshot stacks
+    │   └── history.js         # record, undo, redo, beginGesture/endGesture
+    ├── properties/            # Right-hand properties panel
+    │   └── properties.js      # Wires all property inputs to element model
+    ├── pages/                 # Multi-canvas page management
+    │   └── pages.js           # Add, clone, delete pages + thumbnails
+    ├── export/                # Export pipeline
+    │   └── export.js          # PNG, all pages, ZIP, PDF
+    ├── fonts/                 # Custom font registry & import
+    │   └── fonts.js           # Manifest loading, POST to dev-server plugin
+    ├── shortcuts/             # Global keyboard shortcuts
+    │   └── shortcuts.js       # Undo/redo, cut/copy/paste, delete
+    ├── shadow/                # Text shadow helpers
+    │   └── shadow.js          # parseShadow, composeShadow
+    └── svg/                   # SVG library system
+        └── svg-picker.js      # Multi-select modal, dynamic categories
 ```
+
+### Path aliases
+
+Vite is configured with two path aliases so imports never use relative `../` chains:
+
+| Alias | Resolves to |
+|-------|-------------|
+| `@` | `src/` |
+| `@resources` | `resources/` |
+
+Example: `import { emit } from '@/core/bus.js'` or `import svgData from '@resources/svgs/arrows/svg-data.json'`.
 
 ### Architecture notes
 
-- **Single source of truth**: the model lives in `state.js`; rendering in
-  `canvas.js`; the panel in `properties.js`. No module reaches into another
-  module's DOM.
-- **Event‑driven**: `bus.js` decouples modules — e.g. `elements.js` emits
-  `'render'`, `canvas.js` redraws, `properties.js` refreshes on `'selection'`.
-- **One concern per file**: adding a new element type means adding a factory
-  in `elements.js` and a branch in `canvas.js` — no changes to the UI wiring.
+- **Single source of truth**: the model lives in `core/state.js`; rendering in
+  `canvas/canvas.js`; the panel in `properties/properties.js`. No module
+  reaches into another module's DOM — all references go through `core/dom.js`.
+- **Event‑driven**: `core/bus.js` decouples modules — e.g. `elements/elements.js`
+  emits `'render'`, `canvas/canvas.js` redraws, `properties/properties.js`
+  refreshes on `'selection'`.
+- **One concern per directory**: each `src/` subdirectory owns a single feature.
+  Adding a new element type means adding a factory in `elements/` and a branch
+  in `canvas/canvas.js` — no changes to the UI wiring.
 - **Export is isolated**: swap `html-to-image` for another renderer by editing
-  only `src/export.js`.
+  only `src/export/export.js`.
 - **Custom fonts need the dev server**: the app is client‑side, so importing a
   font POSTs it to the Vite plugin, which validates and persists it. The
   `npm run dev` server also serves the saved files back to the browser.
