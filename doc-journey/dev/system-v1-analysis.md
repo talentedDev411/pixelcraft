@@ -731,6 +731,48 @@ textual (hex field). Users who know their brand colors want to type `#7C5CFC`
 directly; users exploring want the picker. Both should always stay in sync.
 
 
+### 22. Marquee selection — Photoshop-style click-drag to select
+
+**The problem:** Selecting multiple elements required Ctrl+Clicking each one
+individually. For dense layouts with many overlapping elements, this was slow
+and imprecise. Photoshop's marquee selection (click-drag a rectangle to select
+everything inside) is the standard UX for this in design tools.
+
+**What was done:**
+- Added a **marquee selection rectangle** that appears when the user
+  **clicks and drags on the empty canvas area** (no modifier keys needed).
+- The marquee div sits inside `canvas-wrapper` with absolute positioning,
+  dashed purple border, and semi-transparent fill — visually distinct from
+  element selection outlines.
+- On **mouseup**, an **intersection test** checks every element's bounds
+  (x, y, width, height) against the marquee rectangle. All overlapping
+  elements get selected via `setSelectedIds()`.
+- A **`marqueeJustFinished` flag** prevents the subsequent click event
+  from immediately deselecting the marquee results.
+- Minimum drag threshold of 4px prevents accidental selections from
+  misclicks.
+- Works in any direction — dragging up-left, down-right, or diagonally all
+  produce the correct rectangle via `Math.min` / `Math.abs`.
+
+**Implementation detail:** The marquee mousedown is handled inside the main
+`mousedown` handler on `designCanvas` — when the click lands on empty
+canvas (no `.element` ancestor), it starts the marquee instead of doing
+nothing. The mousemove runs on `window` (so dragging outside the canvas
+still works), and mouseup computes the intersection and hides the overlay.
+
+**Key insight:** Marquee selection is a **canvas-level interaction**, not an
+element-level one. It must intercept clicks that land on empty space — the
+same clicks that previously triggered deselect-all. The trick is a
+completion flag that suppresses the deselect on the next click event,
+because mouseup fires before click in the DOM event sequence.
+
+**Files involved:**
+- `src/interactions/interactions.js` — marquee state, mousedown/mousemove/mouseup handlers, intersection test
+- `src/core/dom.js` — `marqueeSelection` DOM ref
+- `index.html` — marquee overlay div inside canvas-wrapper
+- `styles.css` — `.marquee-selection` CSS (dashed border, semi-transparent fill, z-index)
+
+
 ## Recurring theme (worth remembering)
 
 Most of these struggles were one of **three things**:
