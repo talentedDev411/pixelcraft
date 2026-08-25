@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fully normalized HTML-to-Canvas parser fixture</title>
+  <style>
+    .page-hero { background: #f9fafb; }
+    .page-features { background: #fff7ed; }
+    .page-stats { background: #f0fdf4; }
+    .parent1 { display: flex; flex-direction: column; gap: 16px; padding: 16px; background: #ffffff; border: 1px solid #dbe3ef; border-radius: 12px; box-shadow: 0 4px 12px rgba(15,23,42,.12); width: 468px; color: #166534; font-family: Inter; font-size: 15px; line-height: 1.5; text-align: left; }
+    .subparent2 { display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 8px; padding: 12px; background: #f5f5f5; border-radius: 8px; }
+    .card-title { font-size: 18px; font-weight: 700; color: #1a1a1a; font-family: Inter; line-height: 1.25; }
+    .label { font-size: 14px; font-weight: 500; }
+    .image-row { display: flex; flex-direction: row; align-items: center; gap: 12px; padding: 16px; background: #ffffff; border: 1px solid #fed7aa; border-radius: 12px; }
+    .image-copy { font-size: 14px; color: #555555; font-family: Inter; line-height: 1.4; }
+    .stats-grid { display: grid; gap: 10px; padding: 16px; background: #ffffff; border-radius: 12px; }
+    .stat-card { display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; padding: 12px; background: #dcfce7; border-radius: 8px; }
+    .stat-name { font-size: 14px; font-weight: 500; }
+    .stat-value { font-size: 20px; font-weight: 700; color: #15803d; }
+  </style>
+</head>
+<body>
+  <!-- Every <section> is a page. Every imported element below has the required normalized data attributes. -->
+  <section id="hero" class="page-hero" data-section="0" data-page-id="page_0" data-bg-color="#f9fafb">
+    <div class="parent1"
+      data-component="div" data-role="container" data-section="0"
+      data-group="grp_A" data-group-parent="grp_A" data-depth="0" data-classes="parent1"
+      data-layout="flex" data-direction="column" data-gap="16" data-align="stretch" data-justify="flex-start"
+      data-padding="16" data-bg-color="#ffffff" data-border="1px solid #dbe3ef" data-border-radius="12px"
+      data-shadow="0 4px 12px rgba(15,23,42,.12)" data-width="468"
+      data-text-color="#166534" data-font-size="15" data-font-family="Inter" data-line-height="1.5" data-text-align="left">
+
+      <div class="card-title"
+        data-component="text" data-role="leaf" data-section="0" data-group="grp_A" data-depth="1" data-classes="card-title"
+        data-text="Welcome to Freebuff" data-text-color="#1a1a1a" data-font-size="18" data-font-weight="700" data-font-family="Inter" data-line-height="1.25">Welcome to Freebuff</div>
+
+      <div class="subparent2"
+        data-component="div" data-role="container" data-section="0"
+        data-group="grp_B" data-group-parent="grp_B" data-depth="1" data-classes="subparent2"
+        data-layout="flex" data-direction="row" data-gap="8" data-align="center" data-justify="flex-start"
+        data-padding="12" data-bg-color="#f5f5f5" data-border-radius="8px">
+        <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
+          data-component="svg" data-role="leaf" data-section="0" data-group="grp_B" data-depth="2" data-classes=""
+          data-src="data:image/svg+xml,%3Csvg%20width%3D%2724%27%20height%3D%2724%27%20viewBox%3D%270%200%2024%2024%27%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%2710%27%20fill%3D%27%2322c55e%27%2F%3E%3Cpath%20d%3D%27m7%2012%203%203%207-7%27%20fill%3D%27none%27%20stroke%3D%27%23ffffff%27%20stroke-width%3D%272%27%2F%3E%3C%2Fsvg%3E" data-icon="check" data-width="24" data-height="24"><circle cx="12" cy="12" r="10" fill="#22c55e"/><path d="m7 12 3 3 7-7" fill="none" stroke="#ffffff" stroke-width="2"/></svg>
+        <span class="label"
+          data-component="text" data-role="leaf" data-section="0" data-group="grp_B" data-depth="2" data-classes="label"
+          data-text="Inherited label" data-text-color="#166534" data-font-size="14" data-font-weight="500" data-font-family="Inter" data-line-height="1.5" data-text-align="left">Inherited label</span>
+      </div>
+
+      <div class="subparent2"
+        data-component="div" data-role="container" data-section="0"
+        data-group="grp_C" data-group-parent="grp_C" data-depth="1" data-classes="subparent2"
+        data-layout="flex" data-direction="row" data-gap="8" data-align="center" data-justify="flex-start"
+        data-padding="12" data-bg-color="#f5f5f5" data-border-radius="8px">
+        <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
+          data-component="svg" data-role="leaf" data-section="0" data-group="grp_C" data-depth="2" data-classes=""
+          data-src="data:image/svg+xml,%3Csvg%20width%3D%2724%27%20height%3D%2724%27%20viewBox%3D%270%200%2024%2024%27%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%3E%3Cpath%20d%3D%27M12%203v18M3%2012h18%27%20stroke%3D%27%232563eb%27%20stroke-width%3D%272%27%2F%3E%3C%2Fsvg%3E" data-icon="plus" data-width="24" data-height="24"><path d="M12 3v18M3 12h18" stroke="#2563eb" stroke-width="2"/></svg>
+        <span class="label" style="font-size:14px;font-weight:700;color:#dc2626;font-family:Poppins;"
+          data-component="text" data-role="leaf" data-section="0" data-group="grp_C" data-depth="2" data-classes="label"
+          data-text="Premium Features" data-text-color="#dc2626" data-font-size="14" data-font-weight="700" data-font-family="Poppins" data-line-height="1.5" data-text-align="left">Premium Features</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="features" class="page-features" data-section="1" data-page-id="page_1" data-bg-color="#fff7ed">
+    <div class="parent1" style="color:#7c2d12;"
+      data-component="div" data-role="container" data-section="1" data-group="grp_D" data-group-parent="grp_D" data-depth="0" data-classes="parent1"
+      data-layout="flex" data-direction="column" data-gap="16" data-align="stretch" data-justify="flex-start" data-padding="16" data-bg-color="#ffffff" data-border="1px solid #dbe3ef" data-border-radius="12px" data-shadow="0 4px 12px rgba(15,23,42,.12)" data-width="468" data-text-color="#7c2d12" data-font-size="15" data-font-family="Inter" data-line-height="1.5" data-text-align="left">
+      <div class="image-row"
+        data-component="div" data-role="container" data-section="1" data-group="grp_E" data-group-parent="grp_E" data-depth="1" data-classes="image-row"
+        data-layout="flex" data-direction="row" data-gap="12" data-align="center" data-justify="flex-start" data-padding="16" data-bg-color="#ffffff" data-border="1px solid #fed7aa" data-border-radius="12px">
+        <!-- Relative logo.png after parser resolution: data-src is the required base64 data URL. -->
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL6VwAAAABJRU5ErkJggg==" alt="Logo"
+          data-component="img" data-role="leaf" data-section="1" data-group="grp_E" data-depth="2" data-classes=""
+          data-original-src="logo.png" data-src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL6VwAAAABJRU5ErkJggg==" data-alt="Logo" data-img-width="48" data-img-height="48" data-border-radius="50%" data-img-fit="contain" style="width:48px;height:48px;border-radius:50%;object-fit:contain;">
+        <span class="image-copy"
+          data-component="text" data-role="leaf" data-section="1" data-group="grp_E" data-depth="2" data-classes="image-copy"
+          data-text="Description text" data-text-color="#555555" data-font-size="14" data-font-family="Inter" data-line-height="1.4">Description text</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="stats" class="page-stats" data-section="2" data-page-id="page_2" data-bg-color="#f0fdf4">
+    <div class="stats-grid"
+      data-component="div" data-role="container" data-section="2" data-group="grp_F" data-group-parent="grp_F" data-depth="0" data-classes="stats-grid"
+      data-layout="grid" data-gap="10" data-padding="16" data-bg-color="#ffffff" data-border-radius="12px">
+      <div class="stat-card"
+        data-component="div" data-role="container" data-section="2" data-group="grp_G" data-group-parent="grp_G" data-depth="1" data-classes="stat-card"
+        data-layout="flex" data-direction="row" data-gap="8" data-align="center" data-justify="space-between" data-padding="12" data-bg-color="#dcfce7" data-border-radius="8px">
+        <span class="stat-name" data-component="text" data-role="leaf" data-section="2" data-group="grp_G" data-depth="2" data-classes="stat-name" data-text="Active users" data-font-size="14" data-font-weight="500">Active users</span>
+        <span class="stat-value" data-component="text" data-role="leaf" data-section="2" data-group="grp_G" data-depth="2" data-classes="stat-value" data-text="12,400" data-text-color="#15803d" data-font-size="20" data-font-weight="700">12,400</span>
+      </div>
+      <div class="stat-card" style="opacity:.55;"
+        data-component="div" data-role="container" data-section="2" data-group="grp_H" data-group-parent="grp_H" data-depth="1" data-classes="stat-card"
+        data-layout="flex" data-direction="row" data-gap="8" data-align="center" data-justify="space-between" data-padding="12" data-bg-color="#dcfce7" data-border-radius="8px" data-opacity="0.55">
+        <span class="stat-name" data-component="text" data-role="leaf" data-section="2" data-group="grp_H" data-depth="2" data-classes="stat-name" data-text="Premium tier" data-font-size="14" data-font-weight="500">Premium tier</span>
+        <span class="stat-value" data-component="text" data-role="leaf" data-section="2" data-group="grp_H" data-depth="2" data-classes="stat-value" data-text="98%" data-text-color="#15803d" data-font-size="20" data-font-weight="700">98%</span>
+      </div>
+      <div style="position:absolute;left:24px;top:40px;"
+        data-component="text" data-role="leaf" data-section="2" data-group="grp_F" data-depth="1" data-classes="absolute-note"
+        data-text="Absolute position test" data-positioned="true" data-offset-left="24" data-offset-top="40" data-font-size="12">Absolute position test</div>
+    </div>
+  </section>
+</body>
+</html>

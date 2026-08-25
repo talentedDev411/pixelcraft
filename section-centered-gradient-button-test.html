@@ -1,0 +1,46 @@
+<!-- Direct HTML-to-canvas test fragment: no html/head/body wrapper. -->
+<style>
+  .test-section {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 600px;
+    height: 600px;
+    margin: 0;
+    background: #f8fafc;
+  }
+
+  .gradient-button {
+    box-sizing: border-box;
+    width: 240px;
+    height: 72px;
+    border: 0;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
+    color: #ffffff;
+    font-family: Inter, sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 24px;
+    text-align: center;
+  }
+</style>
+
+<section class="test-section" data-page-id="page_center_test" data-section="0">
+  <button class="gradient-button">Centered gradient button</button>
+</section>
+
+<!--
+Expected browser measurement before canvas scaling:
+  section: 600 × 600
+  button:  240 × 72
+  button x = (600 - 240) / 2 = 180
+  button y = (600 - 72)  / 2 = 264
+
+Expected imported text-leaf fields:
+  data-component="text"
+  data-x="180" data-y="264" data-width="240" data-height="72"
+  data-bg-gradient="linear-gradient(...)"
+  data-text="Centered gradient button"
+-->
