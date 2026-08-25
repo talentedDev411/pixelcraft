@@ -14,11 +14,11 @@
 // still disabled drops the selected elements — a clean "cancel" of the
 // selection. If something was already pasted, exiting simply leaves the result.
 
-import { on } from './bus.js';
-import { dom } from './dom.js';
-import { clearClipboard, copyElement, pasteElement } from './elements.js';
-import { deselectAll } from './selection.js';
-import { getSelectedIds } from './state.js';
+import { on } from '@/core/bus.js';
+import { dom } from '@/core/dom.js';
+import { clearClipboard, copyElement, pasteElement } from '@/elements/elements.js';
+import { deselectAll } from '@/selection/selection.js';
+import { getSelectedIds } from '@/core/state.js';
 
 let mode = false;
 

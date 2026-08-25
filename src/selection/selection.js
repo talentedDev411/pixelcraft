@@ -4,8 +4,8 @@
 // Selection supports multiple elements: selectElement() picks exactly one,
 // toggleSelectElement() flips membership (Ctrl+click), deselectAll() clears.
 
-import { emit } from './bus.js';
-import { getSelectedIds, setSelectedIds } from './state.js';
+import { emit } from '@/core/bus.js';
+import { getSelectedIds, setSelectedIds } from '@/core/state.js';
 
 export function selectElement(id) {
     setSelectedIds([id]);

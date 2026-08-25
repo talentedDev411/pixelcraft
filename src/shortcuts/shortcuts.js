@@ -10,9 +10,10 @@
 //   Ctrl+X / Ctrl+C / Ctrl+V        cut / copy / paste the selected element
 //   Delete / Backspace              delete the selected element
 
-import { clearClipboard, copyElement, cutElement, deleteSelectedElements, pasteElement } from './elements.js';
-import { redo, undo } from './history.js';
-import { getSelectedIds } from './state.js';
+import { clearClipboard, copyElement, cutElement, deleteSelectedElements, pasteElement } from '@/elements/elements.js';
+import { redo, undo } from '@/history/history.js';
+import { getSelectedIds } from '@/core/state.js';
+import { deselectAll } from '@/selection/selection.js';
 
 /** True when focus is in a plain form field (properties panel inputs). */
 function isFormField(target) {
@@ -62,6 +63,15 @@ export function initShortcuts() {
             if (getSelectedIds().length) {
                 e.preventDefault();
                 deleteSelectedElements();
+            }
+            return;
+        }
+
+        // Escape: deselect all and hide FAB
+        if (e.key === 'Escape') {
+            if (getSelectedIds().length) {
+                e.preventDefault();
+                deselectAll();
             }
             return;
         }

@@ -6,12 +6,12 @@
 // Pages live in state.pages; this module owns the track DOM and the page
 // lifecycle operations (all undoable via history).
 
-import { emit, on } from './bus.js';
-import { buildElementDiv } from './canvas.js';
-import { transformCss } from './constants.js';
-import { dom } from './dom.js';
-import { record } from './history.js';
-import { deselectAll } from './selection.js';
+import { emit, on } from '@/core/bus.js';
+import { buildElementDiv } from '@/canvas/canvas.js';
+import { transformCss } from '@/core/constants.js';
+import { dom } from '@/core/dom.js';
+import { record } from '@/history/history.js';
+import { deselectAll } from '@/selection/selection.js';
 import {
     getActivePage,
     getActivePageId,
@@ -19,8 +19,8 @@ import {
     getCanvasWidth,
     getPages,
     setActivePageId,
-} from './state.js';
-import { generateId } from './utils.js';
+} from '@/core/state.js';
+import { generateId } from '@/core/utils.js';
 
 /** Fixed width of a page thumbnail; height follows the canvas aspect ratio. */
 const THUMB_WIDTH = 120;

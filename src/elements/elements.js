@@ -2,9 +2,9 @@
 // go through `setElements` + a 'render' event so the canvas stays the single
 // place that knows how to draw.
 
-import { emit } from './bus.js';
-import { ELEMENT_DEFAULTS, MAX_IMAGE_DIM } from './constants.js';
-import { record } from './history.js';
+import { emit } from '@/core/bus.js';
+import { ELEMENT_DEFAULTS, MAX_IMAGE_DIM } from '@/core/constants.js';
+import { record } from '@/history/history.js';
 import {
     getActivePage,
     getCanvasHeight,
@@ -15,9 +15,9 @@ import {
     getSelectedIds,
     setActivePageId,
     setElements,
-} from './state.js';
-import { clamp, findElementById, generateId } from './utils.js';
-import { deselectAll, selectElement } from './selection.js';
+} from '@/core/state.js';
+import { clamp, findElementById, generateId } from '@/core/utils.js';
+import { deselectAll, selectElement } from '@/selection/selection.js';
 
 /** Add a model element, re-render, and select it. */
 function addElement(el) {
@@ -67,6 +67,23 @@ export function addImageElement(file) {
     reader.readAsDataURL(file);
 }
 
+export function addSvgElement(dataUrl, name) {
+    addElement({
+        id: generateId(),
+        type: 'svg',
+        src: dataUrl,
+        svgName: name,
+        x: Math.max(0, (getCanvasWidth() - 60) / 2),
+        y: Math.max(0, (getCanvasHeight() - 60) / 2),
+        width: 60,
+        height: 60,
+        fitMode: 'fill',
+        rotation: 0,
+        skewX: 0,
+        skewY: 0,
+    });
+}
+
 export function deleteElement(id) {
     record();
     setElements(getElements().filter(el => el.id !== id));
@@ -94,6 +111,59 @@ export function moveElementToFront(id) {
     setElements([...getElements().filter(e => e.id !== id), el]);
     emit('render');
     selectElement(el.id);
+}
+
+// ── Group / Ungroup ──
+
+/** Assign a shared groupId to all selected elements. */
+export function groupSelected() {
+    const ids = getSelectedIds();
+    if (ids.length < 2) return;
+    record();
+    const groupId = generateId();
+    const els = getElements().map(el =>
+        ids.includes(el.id) ? { ...el, groupId } : el
+    );
+    setElements(els);
+    emit('render');
+}
+
+/** Remove groupId from all selected elements. */
+export function ungroupSelected() {
+    const ids = getSelectedIds();
+    if (!ids.length) return;
+    record();
+    const els = getElements().map(el =>
+        ids.includes(el.id) ? { ...el, groupId: null } : el
+    );
+    setElements(els);
+    emit('render');
+}
+
+/** Check if an element belongs to a group. */
+export function isGrouped(el) {
+    return !!el.groupId;
+}
+
+/** Get all element ids sharing the same groupId. */
+export function getGroupSiblings(el) {
+    if (!el.groupId) return [el.id];
+    return getElements().filter(e => e.groupId === el.groupId).map(e => e.id);
+}
+
+// ── Lock / Unlock ──
+
+/** Toggle the locked state on the selected element(s). */
+export function toggleLockSelected() {
+    const ids = getSelectedIds();
+    if (!ids.length) return;
+    record();
+    const els = getElements().map(el =>
+        ids.includes(el.id) ? { ...el, locked: !el.locked } : el
+    );
+    setElements(els);
+    emit('render');
+    emit('selection');
 }
 
 export function moveElementToBack(id) {

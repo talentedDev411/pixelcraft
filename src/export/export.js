@@ -11,14 +11,21 @@
 import { toBlob } from 'html-to-image';
 import JSZip from 'jszip';
 import { jsPDF } from 'jspdf';
-import { buildElementDiv } from './canvas.js';
-import { dom } from './dom.js';
-import { EXPORT_PIXEL_RATIO } from './constants.js';
-import { getCanvasSize, getPages } from './state.js';
+import { buildElementDiv } from '@/canvas/canvas.js';
+import { dom } from '@/core/dom.js';
+import { EXPORT_QUALITY_PRESETS, DEFAULT_EXPORT_QUALITY } from '@/core/constants.js';
+import { getCanvasSize, getPages } from '@/core/state.js';
 
 const BASE_LABEL = '📤 Export ▾';
 
 let busy = false;
+let selectedQuality = DEFAULT_EXPORT_QUALITY;
+
+/** Get the current pixelRatio from the selected quality preset. */
+function getPixelRatio() {
+    const preset = EXPORT_QUALITY_PRESETS.find(p => p.id === selectedQuality);
+    return preset ? preset.pixelRatio : 3;
+}
 
 /** Open/close the dropdown menu. */
 function setMenuOpen(open) {
@@ -41,10 +48,13 @@ async function captureLiveCanvas() {
     designCanvas.classList.add('exporting');
     try {
         const blob = await toBlob(designCanvas, {
-            pixelRatio: EXPORT_PIXEL_RATIO,
+            pixelRatio: getPixelRatio(),
             width,
             height,
             cacheBust: true,
+            style: {
+                imageRendering: '-webkit-optimize-contrast',
+            },
         });
         if (!blob) throw new Error('Rendering produced no image.');
         return blob;
@@ -83,10 +93,13 @@ async function capturePage(page) {
     document.body.appendChild(host);
     try {
         const blob = await toBlob(node, {
-            pixelRatio: EXPORT_PIXEL_RATIO,
+            pixelRatio: getPixelRatio(),
             width,
             height,
             cacheBust: true,
+            style: {
+                imageRendering: '-webkit-optimize-contrast',
+            },
         });
         if (!blob) throw new Error('Rendering produced no image.');
         return blob;
@@ -189,6 +202,14 @@ export function initExport() {
     });
     dom.exportMenuItems.forEach(item => {
         item.addEventListener('click', () => runExport(item.dataset.action));
+    });
+    // Quality selector buttons
+    dom.exportQualityBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            selectedQuality = btn.dataset.quality;
+            dom.exportQualityBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
     });
     // Click anywhere outside the dropdown closes it.
     document.addEventListener('click', e => {

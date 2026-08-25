@@ -8,14 +8,14 @@
 // rotate) record once at the start via beginGesture() and skip per-move
 // recording, so one drag = one undo step.
 
-import { emit } from './bus.js';
+import { emit } from '@/core/bus.js';
 import {
     getElements,
     getPagesState,
     getSelectedIds,
     setPagesState,
     setSelectedIds,
-} from './state.js';
+} from '@/core/state.js';
 
 /** Maximum number of undo steps kept in memory (each is a JSON snapshot). */
 const MAX_HISTORY = 100;

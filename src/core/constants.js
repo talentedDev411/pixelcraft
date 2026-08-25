@@ -89,5 +89,13 @@ export const ELEMENT_DEFAULTS = {
     },
 };
 
-/** Export scaling: output is (canvas size × this ratio) pixels. */
-export const EXPORT_PIXEL_RATIO = 2;
+/** Export quality presets — each entry is a pixelRatio applied to the canvas size. */
+export const EXPORT_QUALITY_PRESETS = [
+    { id: 'hd',      label: 'HD',      pixelRatio: 2, hint: '720p' },
+    { id: 'fhd',     label: 'FHD',     pixelRatio: 3, hint: '1080p' },
+    { id: '2k',      label: '2K',      pixelRatio: 4, hint: '1440p' },
+    { id: '4k',      label: '4K',      pixelRatio: 7, hint: '2160p' },
+];
+
+/** Default export quality (Full HD). */
+export const DEFAULT_EXPORT_QUALITY = 'fhd';

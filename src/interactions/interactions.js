@@ -2,20 +2,21 @@
 // context menu. Kept separate from rendering so the canvas module only knows
 // how to draw, and this module only knows how to manipulate.
 
-import { emit } from './bus.js';
-import { dom } from './dom.js';
-import { updateElementModelAndDOM } from './canvas.js';
+import { emit } from '@/core/bus.js';
+import { dom } from '@/core/dom.js';
+import { updateElementModelAndDOM, positionFab } from '@/canvas/canvas.js';
 import {
     deleteElement,
     duplicateElement,
+    getGroupSiblings,
     moveElementToBack,
     moveElementToFront,
     moveElementsToPage,
-} from './elements.js';
-import { beginGesture, endGesture } from './history.js';
-import { getThumbPageIdAt, setDropHighlight } from './pages.js';
-import { isSelectMode } from './selectmode.js';
-import { deselectAll, selectElement, toggleSelectElement } from './selection.js';
+} from '@/elements/elements.js';
+import { beginGesture, endGesture } from '@/history/history.js';
+import { getThumbPageIdAt, setDropHighlight } from '@/pages/pages.js';
+import { isSelectMode } from '@/selection/selectmode.js';
+import { deselectAll, selectElement, toggleSelectElement } from '@/selection/selection.js';
 import {
     getActivePageId,
     getCanvasHeight,
@@ -24,8 +25,9 @@ import {
     getSelectedElement,
     getSelectedIds,
     isSelected,
-} from './state.js';
-import { clamp, findElementById } from './utils.js';
+    setSelectedIds,
+} from '@/core/state.js';
+import { clamp, findElementById } from '@/core/utils.js';
 
 /** Wire up drag, resize, click-to-deselect and the context menu. */
 export function initInteractions() {
@@ -50,12 +52,17 @@ export function initInteractions() {
     // ── Context menu state ──
     let contextMenuTargetId = null;
 
+    // ── Marquee (Ctrl+drag) state ──
+    let isMarquing = false;
+    let marqueeStart = { x: 0, y: 0 };
+    let marqueeJustFinished = false;
+
     // ── Resize ──
     function startResize(handle, e) {
         e.stopPropagation();
         e.preventDefault();
         const el = getSelectedElement();
-        if (!el) return; // images and text are both resizable
+        if (!el || el.locked) return; // images and text are both resizable
         beginGesture(); // one undo step for the whole resize
         isResizing = true;
         resizeHandle = handle;
@@ -75,6 +82,7 @@ export function initInteractions() {
                 angle = ((angle + 180) % 360 + 360) % 360 - 180; // normalize to [-180, 180]
                 updateElementModelAndDOM(el.id, { rotation: angle });
                 emit('transform', el.id);
+            positionFab();
             }
             return;
         }
@@ -97,7 +105,23 @@ export function initInteractions() {
                 }
                 updateElementModelAndDOM(el.id, { x: newX, y: newY, width: newW, height: newH }, true);
                 emit('transform', el.id);
+                positionFab();
             }
+            return;
+        }
+        if (isMarquing) {
+            const rect = designCanvas.getBoundingClientRect();
+            const curX = e.clientX - rect.left;
+            const curY = e.clientY - rect.top;
+            const x = Math.min(marqueeStart.x, curX);
+            const y = Math.min(marqueeStart.y, curY);
+            const w = Math.abs(curX - marqueeStart.x);
+            const h = Math.abs(curY - marqueeStart.y);
+            const marquee = dom.marqueeSelection;
+            marquee.style.left = x + 'px';
+            marquee.style.top = y + 'px';
+            marquee.style.width = w + 'px';
+            marquee.style.height = h + 'px';
             return;
         }
         if (draggedElement && !isResizing) {
@@ -113,6 +137,7 @@ export function initInteractions() {
                 updateElementModelAndDOM(p.id, { x: p.x + dx, y: p.y + dy });
             });
             emit('transform', draggedElement.id);
+            positionFab();
             // Hovering a page thumbnail while dragging previews a cross-page move.
             // The highlight is re-applied every frame because the live track
             // refresh rebuilds the thumbnail nodes while we drag.
@@ -125,6 +150,31 @@ export function initInteractions() {
         // Dropping on a thumbnail of a different page moves the whole group.
         if (draggedElement && dropTargetPageId && dropTargetPageId !== getActivePageId()) {
             moveElementsToPage(getSelectedIds(), dropTargetPageId);
+        }
+        if (isMarquing) {
+            isMarquing = false;
+            marqueeJustFinished = true;
+            const marquee = dom.marqueeSelection;
+            const mx = parseFloat(marquee.style.left);
+            const my = parseFloat(marquee.style.top);
+            const mw = parseFloat(marquee.style.width);
+            const mh = parseFloat(marquee.style.height);
+            marquee.style.display = 'none';
+            // Only select if marquee has meaningful size (min 4px drag)
+            if (mw > 4 || mh > 4) {
+                const mRight = mx + mw;
+                const mBottom = my + mh;
+                const hits = getElements().filter(el => {
+                    // Intersection test: marquee overlaps element bounds
+                    return el.x < mRight && el.x + el.width > mx &&
+                           el.y < mBottom && el.y + el.height > my;
+                });
+                if (hits.length) {
+                    setSelectedIds(hits.map(el => el.id));
+                    emit('selection');
+                }
+            }
+            return;
         }
         isResizing = false;
         resizeHandle = null;
@@ -155,7 +205,7 @@ export function initInteractions() {
             e.stopPropagation();
             e.preventDefault();
             const el = getSelectedElement();
-            if (!el) return;
+            if (!el || el.locked) return;
             beginGesture(); // one undo step for the whole rotation
             isRotating = true;
             const rect = designCanvas.getBoundingClientRect();
@@ -166,9 +216,28 @@ export function initInteractions() {
             return;
         }
         const handle = e.target.closest('.resize-handle');
-        if (handle) { startResize(handle, e); return; }
+        if (handle) {
+            const el = getSelectedElement();
+            if (el && el.locked) return;
+            startResize(handle, e);
+            return;
+        }
         const elementDiv = e.target.closest('.element');
-        if (!elementDiv) return;
+        if (!elementDiv) {
+            // ── Empty canvas: start marquee selection ──
+            const rect = designCanvas.getBoundingClientRect();
+            marqueeStart.x = e.clientX - rect.left;
+            marqueeStart.y = e.clientY - rect.top;
+            isMarquing = true;
+            const marquee = dom.marqueeSelection;
+            marquee.style.display = 'block';
+            marquee.style.left = marqueeStart.x + 'px';
+            marquee.style.top = marqueeStart.y + 'px';
+            marquee.style.width = '0px';
+            marquee.style.height = '0px';
+            e.preventDefault();
+            return;
+        }
         const id = elementDiv.dataset.id;
         // Ctrl+click toggles membership in the selection (multi-select);
         // it never starts a drag.
@@ -178,9 +247,25 @@ export function initInteractions() {
         }
         // Plain click on an already-selected element keeps the group (group
         // drag); a click on an unselected element narrows to it alone.
-        if (!isSelected(id)) selectElement(id);
+        if (!isSelected(id)) {
+            selectElement(id);
+        } else {
+            // Re-show FAB on already-selected element
+            positionFab();
+            dom.fabMenu.style.display = 'none';
+        }
         draggedElement = findElementById(getElements(), id);
         if (!draggedElement) return;
+        // If the clicked element is locked, block the drag.
+        if (draggedElement.locked) return;
+        // If the element is grouped, expand selection to all group siblings.
+        const siblings = getGroupSiblings(draggedElement);
+        if (siblings.length > 1) {
+            const currentIds = getSelectedIds();
+            const merged = [...new Set([...currentIds, ...siblings])];
+            setSelectedIds(merged);
+            emit('selection');
+        }
         beginGesture(); // one undo step for the whole drag
         dragStart = {
             mouseX: e.clientX,
@@ -195,9 +280,12 @@ export function initInteractions() {
         e.preventDefault();
     });
 
-    // Click on empty canvas deselects.
+    // Click on empty canvas deselects all and hides FAB.
     designCanvas.addEventListener('click', e => {
-        if (e.target === designCanvas) deselectAll();
+        if (marqueeJustFinished) { marqueeJustFinished = false; return; }
+        if (e.target === designCanvas) {
+            deselectAll();
+        }
     });
 
     // ── Context menu ──
@@ -210,8 +298,8 @@ export function initInteractions() {
         selectElement(id);
         const el = findElementById(getElements(), id);
         const scaleItem = contextMenu.querySelector('[data-action="scaleToCanvas"]');
-        scaleItem.style.display = (el && el.type === 'image') ? 'flex' : 'none';
-        if (el && el.type === 'image') {
+        scaleItem.style.display = (el && (el.type === 'image' || el.type === 'svg')) ? 'flex' : 'none';
+        if (el && (el.type === 'image' || el.type === 'svg')) {
             fitModeMenuItem.style.display = 'flex';
             const currentMode = el.fitMode || 'fill';
             fitModeMenuItem.textContent = currentMode === 'cover'
@@ -241,10 +329,10 @@ export function initInteractions() {
             case 'duplicate': duplicateElement(contextMenuTargetId); break;
             case 'delete': deleteElement(contextMenuTargetId); break;
             case 'scaleToCanvas':
-                if (el && el.type === 'image') scaleImageToCanvas(el);
+                if (el && (el.type === 'image' || el.type === 'svg')) scaleImageToCanvas(el);
                 break;
             case 'fitModeToggle':
-                if (el && el.type === 'image') {
+                if (el && (el.type === 'image' || el.type === 'svg')) {
                     const newMode = el.fitMode === 'cover' ? 'fill' : 'cover';
                     updateElementModelAndDOM(el.id, { fitMode: newMode });
                     fitModeMenuItem.textContent = newMode === 'cover'
