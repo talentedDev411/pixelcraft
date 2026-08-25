@@ -30,6 +30,13 @@
             <div class="export-dropdown" id="exportDropdown">
                 <button class="btn btn-primary" id="exportBtn" title="Export your design">📤 Export ▾</button>
                 <div class="export-menu" id="exportMenu" style="display:none;">
+                    <div class="export-menu-label">Quality</div>
+                    <div class="export-quality-row" id="exportQualityRow">
+                        <button class="export-quality-btn" data-quality="hd" title="HD 720p — 1200px">HD</button>
+                        <button class="export-quality-btn active" data-quality="fhd" title="Full HD 1080p — 1800px">FHD</button>
+                        <button class="export-quality-btn" data-quality="2k" title="2K QHD — 2400px">2K</button>
+                        <button class="export-quality-btn" data-quality="4k" title="4K UHD — 4200px">4K</button>
+                    </div>
                     <div class="export-menu-label">Export</div>
                     <div class="export-menu-item" data-action="current">
                         <span>🖼️</span>
@@ -58,20 +65,80 @@
             <div class="tool" id="addImageTool" title="Upload an image">
                 <label><span class="tool-icon">🖼️</span> Image <input type="file" id="imageUploadInput" accept="image/*" /></label>
             </div>
-            <div class="tool" id="bgColorTool" title="Canvas background color">
-                <span class="tool-icon">🎨</span> BG <input type="color" id="canvasBgColor" value="#ffffff" />
+            <div class="tool tool-relative" id="bgColorTool" title="Canvas background color">
+                <span class="tool-icon">🎨</span> BG
+                <div class="bg-dropdown" id="bgDropdown" style="display:none;">
+                    <div class="bg-dropdown-row">
+                        <label class="bg-dropdown-label">Solid</label>
+                        <input type="color" id="canvasBgColor" value="#ffffff" class="bg-solid-picker" />
+                    </div>
+                    <div class="bg-dropdown-divider"></div>
+                    <div class="bg-dropdown-row">
+                        <button class="btn-sm" id="openGradientEditorBtn" type="button">🎨 Open Gradient Editor</button>
+                    </div>
+                    <div class="bg-dropdown-row" id="currentGradientRow" style="display:none;">
+                        <label class="bg-dropdown-label">Current</label>
+                        <span id="currentGradientPreview" style="flex:1; height:18px; border-radius:4px; border:1px solid var(--border);"></span>
+                        <button class="btn-sm" id="bgGradientClearBtn" type="button" title="Remove gradient">🗑</button>
+                    </div>
+                </div>
             </div>
             <div class="tool tool-split" id="historyTool" title="Undo (Ctrl+Z) / Redo (Ctrl+Y)">
                 <div class="tool-half tool-btn disabled" id="undoTool" title="Undo (Ctrl+Z)" aria-disabled="true"><span class="tool-icon">↩️</span></div>
                 <div class="tool-divider"></div>
                 <div class="tool-half tool-btn disabled" id="redoTool" title="Redo (Ctrl+Y)" aria-disabled="true"><span class="tool-icon">↪️</span></div>
             </div>
+            <div class="tool" id="svgPickerTool" title="Browse SVG icons"><span class="tool-icon">🔷</span> SVG</div>
+            <div class="tool tool-relative" id="importSvgTool" title="Import SVG from file or code">
+                <span class="tool-icon">📥</span> Import
+                <div class="import-svg-dropdown" id="importSvgDropdown" style="display:none;">
+                    <div class="import-svg-option" id="importSvgLocalOption" title="Select SVG files from your computer">
+                        <span>📁</span>
+                        <div>
+                            <div class="import-svg-option-title">Local SVG File</div>
+                            <div class="import-svg-option-hint">Select multiple from filesystem</div>
+                        </div>
+                    </div>
+                    <div class="import-svg-option" id="importSvgPasteOption" title="Paste SVG code directly">
+                        <span>📋</span>
+                        <div>
+                            <div class="import-svg-option-title">Paste SVG Code</div>
+                            <div class="import-svg-option-hint">Import from markup</div>
+                        </div>
+                    </div>
+                    <div class="import-svg-divider"></div>
+                    <div class="import-svg-option" id="importHtmlOption" title="Import HTML file as canvas elements">
+                        <span>🌐</span>
+                        <div>
+                            <div class="import-svg-option-title">Import HTML</div>
+                            <div class="import-svg-option-hint">Convert HTML/CSS to canvas</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <input type="file" id="importSvgFileInput" accept=".svg,image/svg+xml" multiple hidden />
+            <input type="file" id="importHtmlFileInput" accept=".html,.htm" hidden />
+            <div class="tool" id="htmlInjectTool" title="Inject HTML/CSS code into canvas"><span class="tool-icon">🌐</span> HTML</div>
             <div class="tool" id="selectTool" title="Select mode — tap elements to multi-select, then copy/paste (mobile friendly)"><span class="tool-icon">👆</span> Select</div>
         </div>
 
         <div class="canvas-area" id="canvasArea">
             <div class="canvas-wrapper" id="canvasWrapper">
                 <div class="canvas" id="designCanvas"></div>
+                <div class="marquee-selection" id="marqueeSelection" style="display:none;"></div>
+                <div class="element-fab" id="elementFab" style="display:none;">
+                    <button class="fab-btn" id="fabMenuBtn" title="Actions">⋯</button>
+                    <div class="fab-menu" id="fabMenu" style="display:none;">
+                        <button class="fab-menu-item" data-action="group">📦 Group</button>
+                        <button class="fab-menu-item" data-action="ungroup">📤 Ungroup</button>
+                        <div class="fab-menu-divider"></div>
+                        <button class="fab-menu-item" data-action="lock">🔒 Lock</button>
+                        <button class="fab-menu-item" data-action="unlock">🔓 Unlock</button>
+                        <div class="fab-menu-divider"></div>
+                        <button class="fab-menu-item" data-action="duplicate">📋 Duplicate</button>
+                        <button class="fab-menu-item fab-menu-danger" data-action="delete">🗑️ Delete</button>
+                    </div>
+                </div>
             </div>
             <div class="page-track" id="pageTrack">
                 <div class="page-track-thumbs" id="pageThumbs"></div>
@@ -155,12 +222,13 @@
                 </div>
                 <div class="property-group">
                     <label>Text Color</label>
-                    <div class="color-row"><input type="color" id="textColorInput" value="#000000" /></div>
+                    <div class="color-row"><input type="color" id="textColorInput" value="#000000" /><button class="gradient-bar-btn" id="textColorGradientBtn" title="Click to set gradient text color"><span class="gradient-bar-label">No gradient</span></button></div>
                 </div>
                 <div class="property-group">
                     <label>Background Color</label>
                     <div class="color-row">
                         <input type="color" id="textBgColorInput" value="#ffffff00" />
+                        <button class="gradient-bar-btn" id="textBgGradientBtn" title="Click to set gradient background"><span class="gradient-bar-label">No gradient</span></button>
                         <button class="btn-sm" id="removeTextBgBtn" type="button" title="Remove the text background (transparent)">🗑 Remove BG</button>
                     </div>
                 </div>
@@ -222,6 +290,120 @@
                 </div>
                 <button class="btn-sm" id="deleteImageBtn">🗑️ Delete Element</button>
             </div>
+            <div id="svgProperties" style="display:none;">
+                <div class="property-group">
+                    <label>SVG Fill Color</label>
+                    <div class="color-row">
+                        <input type="color" id="svgFillColorInput" value="#231f20" />
+                        <input type="text" id="svgFillColorHex" class="color-hex-input" value="#231f20" placeholder="#000000" maxlength="7" />
+                        <button class="btn-sm" id="removeSvgFillBtn" type="button" title="Reset to original color">↺ Reset</button>
+                    </div>
+                </div>
+                <div class="svg-prop-section">Gradient</div>
+                <div class="property-group">
+                    <label>Gradient Type</label>
+                    <select id="svgGradientTypeInput">
+                        <option value="linear">Linear</option>
+                        <option value="radial">Radial</option>
+                        <option value="conic">Conic</option>
+                    </select>
+                </div>
+                <div class="property-group">
+                    <label>Gradient End Color</label>
+                    <div class="color-row">
+                        <input type="color" id="svgGradientColorInput" value="#ffffff" />
+                        <input type="text" id="svgGradientColorHex" class="color-hex-input" value="#ffffff" placeholder="#ffffff" maxlength="7" />
+                        <button class="btn-sm" id="removeSvgGradientBtn" type="button" title="Remove gradient">🗑 Remove</button>
+                    </div>
+                </div>
+                <div class="property-group">
+                    <div class="slider-row">
+                        <label>Gradient Angle</label>
+                        <output id="svgGradientAngleValue">0°</output>
+                    </div>
+                    <input type="range" id="svgGradientAngleInput" min="0" max="360" step="1" value="0" />
+                </div>
+                <div class="property-group">
+                    <div class="slider-row">
+                        <label>Gradient Opacity</label>
+                        <output id="svgGradientOpacityValue">100%</output>
+                    </div>
+                    <input type="range" id="svgGradientOpacityInput" min="0" max="100" step="1" value="100" />
+                </div>
+                <div class="property-group">
+                    <label>Color Stops</label>
+                    <div class="gradient-stops-list" id="gradientStopsList"></div>
+                    <button class="btn-sm" id="addGradientStopBtn" type="button">＋ Add Stop</button>
+                </div>
+                <div class="property-group">
+                    <label>Gradient CSS</label>
+                    <div class="color-row">
+                        <input type="text" id="svgGradientCssInput" placeholder="linear-gradient(45deg, #ff0000, #0000ff)" style="font-size:0.72rem; font-family:monospace; flex:1; min-width:0;" />
+                        <button class="btn-sm" id="copySvgGradientCssBtn" type="button" title="Copy gradient CSS">📋</button>
+                    </div>
+                </div>
+                <div class="svg-prop-section">Stroke</div>
+                <div class="property-group">
+                    <div class="slider-row">
+                        <label>Stroke Width</label>
+                        <output id="svgStrokeValue">0</output>
+                    </div>
+                    <input type="range" id="svgStrokeInput" min="0" max="50" step="0.5" value="0" />
+                </div>
+                <div class="svg-prop-section">Main Blur</div>
+                <div class="property-group">
+                    <div class="slider-row">
+                        <label>Blur X</label>
+                        <output id="svgBlurXValue">0</output>
+                    </div>
+                    <input type="range" id="svgBlurXInput" min="0" max="80" step="0.5" value="0" />
+                </div>
+                <div class="property-group">
+                    <div class="slider-row">
+                        <label>Blur Y</label>
+                        <output id="svgBlurYValue">0</output>
+                    </div>
+                    <input type="range" id="svgBlurYInput" min="0" max="80" step="0.5" value="0" />
+                </div>
+                <div class="svg-prop-section">Ghost</div>
+                <div class="property-group">
+                    <div class="slider-row">
+                        <label>Ghost Blur X</label>
+                        <output id="svgGhostBlurXValue">0</output>
+                    </div>
+                    <input type="range" id="svgGhostBlurXInput" min="0" max="100" step="0.5" value="0" />
+                </div>
+                <div class="property-group">
+                    <div class="slider-row">
+                        <label>Ghost Blur Y</label>
+                        <output id="svgGhostBlurYValue">0</output>
+                    </div>
+                    <input type="range" id="svgGhostBlurYInput" min="0" max="100" step="0.5" value="0" />
+                </div>
+                <div class="property-group">
+                    <div class="slider-row">
+                        <label>Ghost Offset X</label>
+                        <output id="svgGhostOffXValue">0</output>
+                    </div>
+                    <input type="range" id="svgGhostOffXInput" min="-100" max="100" step="1" value="0" />
+                </div>
+                <div class="property-group">
+                    <div class="slider-row">
+                        <label>Ghost Offset Y</label>
+                        <output id="svgGhostOffYValue">0</output>
+                    </div>
+                    <input type="range" id="svgGhostOffYInput" min="-100" max="100" step="1" value="0" />
+                </div>
+                <div class="property-group">
+                    <div class="slider-row">
+                        <label>Ghost Opacity</label>
+                        <output id="svgGhostOpacityValue">0</output>
+                    </div>
+                    <input type="range" id="svgGhostOpacityInput" min="0" max="1" step="0.01" value="0" />
+                </div>
+                <button class="btn-sm" id="resetSvgPropsBtn" type="button" title="Reset all SVG properties">↺ Reset All</button>
+                <button class="btn-sm" id="deleteSvgBtn">🗑️ Delete Element</button>
+            </div>
         </div>
     </div>
 
@@ -230,6 +412,56 @@
         <button class="select-menu-btn disabled" id="selectCopyBtn" type="button" title="Copy the selected element(s)" disabled>📋 Copy</button>
         <button class="select-menu-btn disabled" id="selectPasteBtn" type="button" title="Paste copied element(s)" disabled>📥 Paste</button>
         <div class="select-menu-hint">Tap elements to select · tap Select again to cancel</div>
+    </div>
+
+    <!-- HTML Inject Modal -->
+    <div class="import-svg-backdrop" id="htmlInjectBackdrop" style="display:none;">
+        <div class="import-svg-paste-modal" style="width:560px;">
+            <div class="import-svg-paste-header">
+                <h3>🌐 Inject HTML/CSS</h3>
+                <button class="svg-picker-close" id="htmlInjectClose">✕</button>
+            </div>
+            <div class="import-svg-paste-body">
+                <div style="display:flex;gap:6px;align-items:center;">
+                    <button class="svg-picker-btn" id="htmlInjectTabCode" style="background:var(--primary);color:#fff;">📝 Paste Code</button>
+                    <button class="svg-picker-btn svg-picker-btn-cancel" id="htmlInjectTabFile">📁 Upload File</button>
+                </div>
+                <div id="htmlInjectCodePanel">
+                    <textarea id="htmlInjectInput" placeholder="Paste your HTML + CSS here..." rows="16"></textarea>
+                    <div class="import-svg-paste-hint">Paste complete HTML with inline CSS. The parser extracts text, images, and SVGs as editable canvas elements.</div>
+                </div>
+                <div id="htmlInjectFilePanel" style="display:none;">
+                    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:120px;border:2px dashed var(--border);border-radius:10px;cursor:pointer;gap:8px;padding:20px;" id="htmlInjectDropZone">
+                        <span style="font-size:2rem;">📄</span>
+                        <span style="font-size:0.8rem;color:var(--text-secondary);">Click or drop an .html file here</span>
+                        <input type="file" id="htmlInjectFileInput" accept=".html,.htm" style="display:none;" />
+                    </div>
+                    <div class="import-svg-paste-hint" style="margin-top:8px;">Upload an HTML file — its structure and styles will be converted to editable elements.</div>
+                </div>
+            </div>
+            <div class="import-svg-paste-footer">
+                <button class="svg-picker-btn svg-picker-btn-cancel" id="htmlInjectCancel">Cancel</button>
+                <button class="svg-picker-btn svg-picker-btn-confirm" id="htmlInjectConfirm">🌐 Inject to Canvas</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SVG Paste Modal -->
+    <div class="import-svg-backdrop" id="importSvgPasteBackdrop" style="display:none;">
+        <div class="import-svg-paste-modal">
+            <div class="import-svg-paste-header">
+                <h3>Paste SVG Code</h3>
+                <button class="svg-picker-close" id="importSvgPasteClose">✕</button>
+            </div>
+            <div class="import-svg-paste-body">
+                <textarea id="importSvgPasteInput" placeholder="<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 100 100">...</svg>" rows="12"></textarea>
+                <div class="import-svg-paste-hint">Paste raw SVG markup below. You can paste multiple SVGs separated by a blank line.</div>
+            </div>
+            <div class="import-svg-paste-footer">
+                <button class="svg-picker-btn svg-picker-btn-cancel" id="importSvgPasteCancel">Cancel</button>
+                <button class="svg-picker-btn svg-picker-btn-confirm" id="importSvgPasteConfirm">Import</button>
+            </div>
+        </div>
     </div>
 
     <script type="module" src="/src/main.js"></script>

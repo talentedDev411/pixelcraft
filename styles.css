@@ -44,6 +44,33 @@ body {
 .export-menu-item > span { font-size:1.05rem; }
 .export-menu-title { font-size:0.8rem; font-weight:600; color:var(--text); }
 .export-menu-hint { font-size:0.66rem; color:var(--text-secondary); }
+.export-quality-row {
+    display: flex;
+    gap: 4px;
+    padding: 4px 8px 8px;
+}
+.export-quality-btn {
+    flex: 1;
+    padding: 5px 0;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 6px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    color: var(--text-secondary);
+}
+.export-quality-btn:hover {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+.export-quality-btn.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
 .editor-layout { display:flex; flex:1; overflow:hidden; }
 .toolbox { width:54px; background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; align-items:center; padding:10px 0; gap:6px; flex-shrink:0; z-index:5; }
 .tool { display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; padding:6px 4px; border-radius:8px; transition:var(--transition); width:44px; color:var(--text-secondary); font-size:0.6rem; font-weight:500; border:2px solid transparent; }
@@ -101,8 +128,16 @@ body {
 .color-row input[type="color"] { width:36px; height:36px; border:none; border-radius:50%; cursor:pointer; padding:0; background:transparent; }
 .color-row input[type="color"]::-webkit-color-swatch-wrapper { padding:0; }
 .color-row input[type="color"]::-webkit-color-swatch { border:2px solid var(--border); border-radius:50%; }
+.color-hex-input { width:72px; padding:4px 6px; font-size:0.75rem; font-family:monospace; border:1px solid var(--border); border-radius:4px; background:#fafafa; color:var(--text); }
+.color-hex-input:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 2px var(--primary-light); }
 .btn-sm { padding:6px 12px; font-size:0.75rem; border-radius:4px; background:#f0f0f0; border:1px solid var(--border); cursor:pointer; }
 .btn-sm:hover { background:#e0e0e0; }
+.gradient-bar-btn { height:28px; min-width:80px; flex:1; border:2px dashed var(--border); border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:border-color 0.15s, box-shadow 0.15s; overflow:hidden; position:relative; background:#f9fafb; padding:0 6px; }
+.gradient-bar-btn:hover { border-color:var(--primary); box-shadow:0 0 0 2px var(--primary-light); }
+.gradient-bar-btn.has-gradient { border-style:solid; border-color:var(--border); background:linear-gradient(90deg,#fff,#fff); }
+.gradient-bar-btn.has-gradient .gradient-bar-label { display:none; }
+.gradient-bar-btn .gradient-bar-thumb { position:absolute; inset:0; border-radius:4px; }
+.gradient-bar-label { font-size:0.65rem; color:var(--text-secondary); white-space:nowrap; }
 .empty-state { color:#999; font-size:0.8rem; text-align:center; margin-top:40px; }
 .multi-selection-note { background:var(--primary-light); color:var(--primary); border:1px solid var(--primary); border-radius:var(--radius-sm); padding:8px 10px; font-size:0.75rem; font-weight:500; line-height:1.4; }
 .hint { font-size:0.7rem; color:var(--text-secondary); line-height:1.4; }
@@ -130,6 +165,99 @@ body {
 .page-btn:hover { background:var(--primary-light); border-color:var(--primary); }
 .page-btn:disabled { opacity:0.4; cursor:not-allowed; }
 
+/* Marquee selection rectangle (Ctrl+drag on empty canvas) */
+.marquee-selection {
+    position: absolute;
+    border: 1.5px dashed var(--primary);
+    background: rgba(124, 92, 252, 0.08);
+    pointer-events: none;
+    z-index: 20;
+    border-radius: 1px;
+}
+
+/* Floating action button on selected elements */
+.element-fab {
+    position: absolute;
+    z-index: 15;
+    pointer-events: auto;
+}
+.fab-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    transition: background 0.15s, transform 0.1s;
+    line-height: 1;
+}
+.fab-btn:hover { background: #6a48e0; transform: scale(1.1); }
+.fab-menu {
+    position: absolute;
+    top: 34px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    padding: 4px 0;
+    min-width: 140px;
+    z-index: 100;
+}
+.fab-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 14px;
+    border: none;
+    background: none;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    white-space: nowrap;
+    transition: background 0.1s;
+}
+.fab-menu-item:hover { background: var(--primary-light); color: var(--primary); }
+.fab-menu-item.fab-menu-danger:hover { background: #fef2f2; color: #b91c1c; }
+.fab-menu-item.disabled { opacity: 0.35; pointer-events: none; }
+.fab-menu-divider { height: 1px; background: var(--border); margin: 2px 0; }
+.fab-locked-overlay {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    font-size: 0.7rem;
+    background: rgba(255,255,255,0.9);
+    border-radius: 4px;
+    padding: 1px 3px;
+    pointer-events: none;
+    z-index: 5;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+.fab-group-badge {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    font-size: 0.55rem;
+    background: var(--primary);
+    color: #fff;
+    border-radius: 4px;
+    padding: 1px 4px;
+    pointer-events: none;
+    z-index: 5;
+    font-weight: 600;
+}
+
 /* Rotate handle for selected text elements */
 .rotate-handle { position:absolute; top:-24px; left:50%; transform:translateX(-50%); width:16px; height:16px; background:var(--primary); border:2px solid #fff; border-radius:50%; cursor:grab; z-index:10; box-sizing:border-box; box-shadow:0 1px 4px rgba(0,0,0,0.25); }
 .rotate-handle::after { content:'⟳'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:9px; color:#fff; line-height:1; }
@@ -155,6 +283,383 @@ body {
 .select-menu-btn:disabled { opacity:0.4; cursor:not-allowed; }
 .select-menu-hint { font-size:0.6rem; color:var(--text-secondary); text-align:center; line-height:1.3; }
 
+/* ── SVG Picker Modal ── */
+.svg-picker-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+.svg-picker-modal {
+    background: var(--surface);
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    width: 620px;
+    max-width: 90vw;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.svg-picker-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+}
+.svg-picker-header h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text);
+}
+.svg-picker-close {
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: #f0f0f0;
+    border-radius: 50%;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    color: var(--text-secondary);
+}
+.svg-picker-close:hover {
+    background: #e0e0e0;
+    color: var(--text);
+}
+.svg-picker-count {
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 50px;
+    margin-left: 8px;
+}
+
+/* ── SVG property sliders ── */
+.svg-prop-section {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin: 12px 0 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+}
+.slider-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+.slider-row label {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+.slider-row output {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--primary);
+    font-variant-numeric: tabular-nums;
+    min-width: 30px;
+    text-align: right;
+}
+.property-group input[type="range"] {
+    width: 100%;
+    accent-color: var(--primary);
+    cursor: pointer;
+    height: 4px;
+}
+
+/* Ghost layer inside SVG elements on canvas */
+.svg-ghost-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+.svg-ghost-layer img {
+    width: 100%;
+    height: 100%;
+    object-fit: inherit;
+}
+.svg-picker-tabs {
+    display: flex;
+    gap: 6px;
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    flex-shrink: 0;
+}
+.svg-picker-tab {
+    padding: 5px 14px;
+    border-radius: 50px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    background: #f0f0f0;
+    color: var(--text-secondary);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.svg-picker-tab:hover {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+.svg-picker-tab.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+.svg-picker-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60px;
+    max-height: 100px;
+    background: #f9fafb;
+    border-bottom: 1px solid var(--border);
+    overflow-y: auto;
+}
+.svg-picker-preview-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 16px;
+    width: 100%;
+}
+.svg-picker-preview-placeholder {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+.svg-picker-preview-thumb {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    border: 2px solid var(--primary-light);
+    border-radius: 6px;
+    background: #fff;
+    padding: 2px;
+    flex-shrink: 0;
+    transition: border-color 0.15s;
+}
+.svg-picker-preview-thumb:hover {
+    border-color: var(--primary);
+}
+.svg-picker-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+}
+.svg-picker-category {
+    margin-bottom: 16px;
+}
+.svg-picker-category-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+}
+.svg-picker-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: flex-start;
+}
+.svg-picker-cell {
+    width: 50px;
+    height: 50px;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, transform 0.15s, box-shadow 0.15s;
+    background: transparent;
+    flex-shrink: 0;
+}
+.svg-picker-cell:hover {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    transform: scale(1.05);
+}
+.svg-picker-cell.selected {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    box-shadow: 0 0 0 3px rgba(124, 92, 252, 0.2);
+}
+.svg-picker-cell img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    pointer-events: none;
+}
+.svg-picker-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    background: #f9fafb;
+}
+.svg-picker-btn {
+    padding: 8px 22px;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: background 0.15s, transform 0.1s;
+}
+.svg-picker-btn:active {
+    transform: scale(0.97);
+}
+.svg-picker-btn-cancel {
+    background: #f0f0f0;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+}
+.svg-picker-btn-cancel:hover {
+    background: #e0e0e0;
+}
+.svg-picker-btn-confirm {
+    background: var(--primary);
+    color: #fff;
+}
+.svg-picker-btn-confirm:hover {
+    background: #6a48e0;
+}
+
+/* ── Import SVG dropdown + paste modal ── */
+.import-svg-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    padding: 4px 0;
+    min-width: 180px;
+    z-index: 300;
+    margin-top: 6px;
+}
+.import-svg-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    cursor: pointer;
+    transition: background 0.1s;
+    border-radius: 6px;
+    margin: 2px 4px;
+}
+.import-svg-option:hover {
+    background: var(--primary-light);
+}
+.import-svg-option > span {
+    font-size: 1.1rem;
+}
+.import-svg-option-title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text);
+}
+.import-svg-option-hint {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+}
+.import-svg-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+.import-svg-paste-modal {
+    background: var(--surface);
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    width: 480px;
+    max-width: 90vw;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.import-svg-paste-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+}
+.import-svg-paste-header h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text);
+}
+.import-svg-paste-body {
+    padding: 16px 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.import-svg-paste-body textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 0.78rem;
+    resize: vertical;
+    outline: none;
+    background: #fafafa;
+    color: var(--text);
+    line-height: 1.4;
+}
+.import-svg-paste-body textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(124,92,252,0.1);
+}
+.import-svg-paste-hint {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+.import-svg-paste-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    background: #f9fafb;
+}
+.tool-relative { position: relative; }
+
 @media (max-width: 768px) {
     .editor-layout { flex-direction:column; }
     .toolbox { width:100%; flex-direction:row; justify-content:center; padding:6px 0; border-right:none; border-bottom:1px solid var(--border); gap:6px; overflow-x:auto; }
@@ -167,4 +672,22 @@ body {
     .top-bar { padding:8px 12px; }
     .aspect-btn { padding:4px 10px; font-size:0.7rem; }
     .select-menu-btn { padding:13px 16px; font-size:0.88rem; }
+    /* SVG Picker mobile */
+    .svg-picker-modal { width:100vw; max-width:100vw; max-height:100vh; border-radius:0; height:100vh; }
+    .svg-picker-header { padding:12px 14px; }
+    .svg-picker-header h3 { font-size:0.9rem; }
+    .svg-picker-tabs { padding:8px 12px; gap:4px; }
+    .svg-picker-tab { padding:4px 10px; font-size:0.72rem; }
+    .svg-picker-content { padding:12px; }
+    .svg-picker-grid { gap:4px; }
+    .svg-picker-cell { width:44px; height:44px; }
+    .svg-picker-cell img { width:34px; height:34px; }
+    .svg-picker-preview-thumb { width:36px; height:36px; }
+    .svg-picker-preview { min-height:50px; max-height:80px; }
+    .svg-picker-footer { padding:10px 14px; }
+    .svg-picker-btn { padding:7px 16px; font-size:0.8rem; }
+    /* Import SVG mobile */
+    .import-svg-dropdown { min-width:160px; font-size:0.72rem; }
+    .import-svg-paste-modal { width:95vw; max-width:95vw; }
+    .import-svg-paste-body textarea { font-size:0.72rem; min-height:120px; }
 }
