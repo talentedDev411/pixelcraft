@@ -12,6 +12,7 @@ import {
     getCanvasHeight,
     getCanvasWidth,
     getElements,
+    getPages,
     getSelectedElementId,
     getSelectedIds,
     isSelected,
@@ -19,27 +20,70 @@ import {
 } from '@/core/state.js';
 import { findElementById } from '@/core/utils.js';
 import { groupSelected, ungroupSelected, toggleLockSelected, duplicateElement, deleteSelectedElements } from '@/elements/elements.js';
-import { deselectAll } from '@/selection/selection.js';
 
-/** Recompute canvas pixel size from the selected aspect ratio and viewport. */
+
+/**
+ * Recompute canvas pixel size from the selected aspect ratio and viewport.
+ * The canvas fills the available viewport area, and the aspect ratio scales
+ * it proportionally (no scrollbars).
+ *
+ * When the canvas size changes, every element on every page is scaled
+ * proportionally so the design stays visually identical at the new size —
+ * like zooming a vector image.
+ */
 export function updateCanvasSize() {
     const { canvasArea, canvasWrapper } = dom;
     const ratio = ASPECT_RATIOS[getAspectRatio()];
-    const maxW = Math.min(canvasArea.clientWidth - 60, 600);
+    const [rw, rh] = ratio;
+    const ratioVal = rw / rh;
+
+    // Capture old dimensions before computing new ones.
+    const oldW = getCanvasWidth();
+    const oldH = getCanvasHeight();
+
     // Reserve room for the page track below the canvas.
     const trackH = dom.pageTrack ? dom.pageTrack.offsetHeight : 0;
-    const maxH = canvasArea.clientHeight - 60 - trackH;
-    let w, h;
-    if (ratio[0] / ratio[1] > maxW / maxH) {
-        w = maxW;
-        h = w * (ratio[1] / ratio[0]);
-    } else {
-        h = maxH;
-        w = h * (ratio[0] / ratio[1]);
+    const availableW = canvasArea.clientWidth - 60;
+    const availableH = canvasArea.clientHeight - 60 - trackH;
+
+    // Fill the viewport, then scale down by aspect ratio.
+    let w = availableW;
+    let h = w / ratioVal;
+    if (h > availableH) {
+        h = availableH;
+        w = h * ratioVal;
     }
+
     setCanvasSize(w, h);
     canvasWrapper.style.width = w + 'px';
     canvasWrapper.style.height = h + 'px';
+
+    // ── Scale all elements proportionally ──
+    // If the canvas changed size, every element's x/y/width/height
+    // is multiplied by the scale factor so the design stays intact.
+    if (oldW > 0 && oldH > 0 && (w !== oldW || h !== oldH)) {
+        const sx = w / oldW;
+        const sy = h / oldH;
+        getPages().forEach(page => {
+            page.elements.forEach(el => {
+                el.x = Math.round(el.x * sx);
+                el.y = Math.round(el.y * sy);
+                el.width = Math.round(el.width * sx);
+                el.height = Math.round(el.height * sy);
+                if (el.type === 'text') {
+                    el.fontSize = Math.round(el.fontSize * Math.min(sx, sy));
+                    if (el.padding) {
+                        el.padding = {
+                            top: Math.round(el.padding.top * Math.min(sx, sy)),
+                            right: Math.round(el.padding.right * Math.min(sx, sy)),
+                            bottom: Math.round(el.padding.bottom * Math.min(sx, sy)),
+                            left: Math.round(el.padding.left * Math.min(sx, sy)),
+                        };
+                    }
+                }
+            });
+        });
+    }
 }
 
 /**
