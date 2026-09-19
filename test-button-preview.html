@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #f0f4ff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 48px 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            max-width: 480px;
+            width: 100%;
+        }
+        .card h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+        .card p {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 32px;
+            line-height: 1.5;
+        }
+        .button-row {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+        }
+        .icon-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 140px;
+            height: 120px;
+            border: 2px solid #e5e7eb;
+            border-radius: 14px;
+            background: #fafbff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+        .icon-btn:hover {
+            border-color: #7c5cfc;
+            background: #f0edff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(124, 92, 252, 0.2);
+        }
+        .icon-btn .icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            background: #ede9fe;
+            border-radius: 10px;
+            color: #7c5cfc;
+        }
+        .icon-btn .label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+        }
+    </style>
+</head>
+<body>
+    <section class="card">
+        <h2>Choose an Action</h2>
+        <p>Pick one of the options below to get started with your project.</p>
+        <div class="button-row">
+            <a href="#" class="icon-btn">
+                <span class="icon">🚀</span>
+                <span class="label">Launch</span>
+            </a>
+            <a href="#" class="icon-btn">
+                <span class="icon">⚙️</span>
+                <span class="label">Settings</span>
+            </a>
+        </div>
+    </section>
+</body>
+</html>
