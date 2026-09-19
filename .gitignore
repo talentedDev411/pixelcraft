@@ -4,3 +4,7 @@ output/
 doc-journey/
 .freebuff/
 *.log
+
+# Local design notes / scratch documentation (not project docs)
+html_code_parser_logic/
+single_resolved_style_obj.txt
