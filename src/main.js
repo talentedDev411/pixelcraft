@@ -47,15 +47,6 @@ dom.aspectBtns.forEach(btn => {
         btn.classList.add('active');
         setAspectRatio(btn.dataset.ratio);
         updateCanvasSize();
-        // Keep every page's elements inside the resized canvas.
-        getPages().forEach(page => {
-            page.elements.forEach(el => {
-                el.x = Math.min(el.x, getCanvasWidth() - el.width);
-                el.x = Math.max(0, el.x);
-                el.y = Math.min(el.y, getCanvasHeight() - el.height);
-                el.y = Math.max(0, el.y);
-            });
-        });
         emit('render');
     });
 });
@@ -334,6 +325,8 @@ window.addEventListener('resize', () => {
     updateCanvasSize();
     emit('render');
 });
+
+
 
 // ── Initial layout ──
 updateCanvasSize();
