@@ -52,10 +52,11 @@ export function initInteractions() {
     // ── Context menu state ──
     let contextMenuTargetId = null;
 
-    // ── Marquee (Ctrl+drag) state ──
+    // ── Marquee (drag on empty canvas) state ──
     let isMarquing = false;
     let marqueeStart = { x: 0, y: 0 };
     let marqueeJustFinished = false;
+    let marqueeActuallyDragged = false; // false ⇒ a plain click, not a drag
 
     // ── Resize ──
     function startResize(handle, e) {
@@ -110,6 +111,10 @@ export function initInteractions() {
             return;
         }
         if (isMarquing) {
+            // Any real movement promotes this from "plain click" to a drag
+            // selection; without it the flag below would eat the click that
+            // should deselect.
+            marqueeActuallyDragged = true;
             const rect = designCanvas.getBoundingClientRect();
             const curX = e.clientX - rect.left;
             const curY = e.clientY - rect.top;
@@ -153,7 +158,12 @@ export function initInteractions() {
         }
         if (isMarquing) {
             isMarquing = false;
-            marqueeJustFinished = true;
+            // Only a real drag needs to suppress the follow-up click (the
+            // click that fires after a drag-select would otherwise deselect
+            // what the marquee just selected). A plain click must NOT set
+            // this flag — it has to fall through so the click handler below
+            // deselects (like clicking outside a focused button).
+            marqueeJustFinished = marqueeActuallyDragged;
             const marquee = dom.marqueeSelection;
             const mx = parseFloat(marquee.style.left);
             const my = parseFloat(marquee.style.top);
@@ -235,6 +245,7 @@ export function initInteractions() {
             marquee.style.top = marqueeStart.y + 'px';
             marquee.style.width = '0px';
             marquee.style.height = '0px';
+            marqueeActuallyDragged = false; // a click until the pointer moves
             e.preventDefault();
             return;
         }
@@ -280,12 +291,27 @@ export function initInteractions() {
         e.preventDefault();
     });
 
-    // Click on empty canvas deselects all and hides FAB.
+    // Click on empty canvas deselects all and hides FAB. Clicking an element
+    // (or its handles / caret) never reaches this — same mental model as a
+    // focused button that only loses focus when you click outside it.
     designCanvas.addEventListener('click', e => {
         if (marqueeJustFinished) { marqueeJustFinished = false; return; }
         if (e.target === designCanvas) {
             deselectAll();
         }
+    });
+
+    // Clicking the gray area around the canvas also deselects, so the
+    // highlight can always be dismissed no matter where the user clicks.
+    // UI surfaces that act ON the selection (context menu, FAB, select-mode
+    // Copy/Paste menu) are exempt — pressing them must not drop it.
+    document.addEventListener('pointerdown', e => {
+        const keepSelectors = [
+            '#designCanvas', '.toolbox', '.top-bar', '.properties-panel',
+            '.page-track', '#contextMenu', '#elementFab', '#selectMenu',
+        ];
+        if (keepSelectors.some(s => e.target.closest(s))) return;
+        deselectAll();
     });
 
     // ── Context menu ──

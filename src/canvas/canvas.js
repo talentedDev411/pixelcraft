@@ -218,6 +218,10 @@ export function applySelectionToDOM(ids) {
         elDiv.classList.remove('selected');
         if (elDiv.classList.contains('text-element')) {
             elDiv.setAttribute('contenteditable', 'false');
+            // Blur like a focused button: if this text box is being edited
+            // (caret visible), clicking outside must dismiss the caret and
+            // the native text highlight, not leave it dangling.
+            if (document.activeElement === elDiv) elDiv.blur();
         }
         elDiv.querySelectorAll('.resize-handle, .rotate-handle').forEach(h => h.remove());
     });
