@@ -61,6 +61,46 @@ dom.imageUploadInput.addEventListener('change', e => {
     }
 });
 
+// ── BG tool → opens the background editor (gradient modal) ──
+// The Type dropdown inside it offers Transparent | Solid | gradient shapes;
+// the page keeps whichever one was applied last.
+dom.bgColorTool.addEventListener('click', e => {
+    e.stopPropagation();
+    const page = getActivePage();
+    // Preselect the page's current background in the modal.
+    const isTransparent = !page || !page.bgColor || page.bgColor === 'transparent';
+    const flatMode = page && page.bgGradient ? null : (isTransparent ? 'transparent' : 'solid');
+    const flatColor = page && /^#[0-9a-fA-F]{6}$/.test(page.bgColor) ? page.bgColor : '#ffffff';
+    try {
+        openGradientModal({
+            currentGradient: page ? page.bgGradient : null,
+            flatMode,
+            flatColor,
+            apply: (css) => {
+                const p = getActivePage();
+                if (!p) return;
+                record(); // undo point BEFORE painting the background
+                if (css === 'transparent') {
+                    p.bgColor = 'transparent';
+                    p.bgGradient = null;
+                } else if (css && !css.includes('gradient(')) {
+                    // A plain color from the Solid picker.
+                    p.bgColor = css;
+                    p.bgGradient = null;
+                } else if (css) {
+                    p.bgGradient = css;
+                } else {
+                    p.bgGradient = null;
+                }
+                dom.designCanvas.style.background = p.bgGradient || p.bgColor;
+                emit('render');
+            },
+        });
+    } catch (err) {
+        console.error('Failed to open background editor:', err);
+    }
+});
+
 // ── Toolbox: Import SVG ──
 // Toggle the dropdown on tool click
 dom.importSvgTool.addEventListener('click', e => {
@@ -236,62 +276,6 @@ dom.htmlInjectConfirm.addEventListener('click', async () => {
     }
 });
 
-dom.bgColorInput.addEventListener('input', e => {
-    // Background lives on the active page so each page keeps its own color.
-    const page = getActivePage();
-    if (page) {
-        page.bgColor = e.target.value;
-        page.bgGradient = null; // clear gradient when picking solid
-    }
-    dom.designCanvas.style.background = e.target.value;
-    updateGradientPreview();
-});
-
-// ── BG tool → opens gradient editor modal ──
-dom.bgColorTool.addEventListener('click', e => {
-    e.stopPropagation();
-    dom.bgDropdown.style.display = 'none';
-    const page = getActivePage();
-    try {
-        openGradientModal({
-            currentGradient: page ? page.bgGradient : null,
-            apply: (css) => {
-                const p = getActivePage();
-                if (p) {
-                    if (css) {
-                        p.bgGradient = css;
-                        dom.designCanvas.style.background = css;
-                    } else {
-                        p.bgGradient = null;
-                        dom.designCanvas.style.background = p.bgColor;
-                    }
-                }
-                updateGradientPreview();
-                emit('render');
-            },
-        });
-    } catch (err) {
-        console.error('Failed to open gradient modal:', err);
-    }
-});
-document.addEventListener('click', e => {
-    if (!dom.bgColorTool.contains(e.target)) dom.bgDropdown.style.display = 'none';
-});
-
-/**
- * Update the gradient preview indicator in the BG dropdown.
- */
-function updateGradientPreview() {
-    const page = getActivePage();
-    const hasGradient = page && page.bgGradient;
-    if (dom.currentGradientRow) {
-        dom.currentGradientRow.style.display = hasGradient ? 'flex' : 'none';
-    }
-    if (dom.currentGradientPreview && hasGradient) {
-        dom.currentGradientPreview.style.background = page.bgGradient;
-    }
-}
-
 // ── Toolbox: undo / redo buttons ──
 function syncHistoryButtons() {
     dom.undoTool.classList.toggle('disabled', !canUndo());
@@ -310,13 +294,11 @@ dom.clearCanvasBtn.addEventListener('click', () => {
     const page = getActivePage();
     if (page) {
         page.elements = [];
-        page.bgColor = '#ffffff';
+        page.bgColor = 'transparent'; // matches the BG tool's default Type
         page.bgGradient = null;
     }
     setSelectedElementId(null);
-    dom.designCanvas.style.background = '#ffffff';
-    dom.bgColorInput.value = '#ffffff';
-    updateGradientPreview();
+    dom.designCanvas.style.background = 'transparent';
     emit('render');
 });
 
