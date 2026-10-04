@@ -18,10 +18,24 @@ export function createPreview(container) {
 
     function render() {
         const state = store.getState();
-        const gradients = state.gradients.filter((g) => g.enabled);
 
+        // backgroundColor/Image are set separately: the CSS checkerboard on
+        // this node must survive so "transparent" reads as transparent.
+        if (state.flatMode === 'transparent') {
+            canvas.style.backgroundImage = 'none';
+            canvas.style.backgroundColor = 'transparent';
+            return;
+        }
+        if (state.flatMode === 'solid') {
+            canvas.style.backgroundImage = 'none';
+            canvas.style.backgroundColor = state.flatColor;
+            return;
+        }
+
+        const gradients = state.gradients.filter((g) => g.enabled);
         if (gradients.length === 0) {
-            canvas.style.background = 'transparent';
+            canvas.style.backgroundImage = 'none';
+            canvas.style.backgroundColor = 'transparent';
             return;
         }
 

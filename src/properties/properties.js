@@ -323,6 +323,7 @@ export function initProperties() {
         if (!el || el.type !== 'text') return;
         openGradientModal({
             currentGradient: el.textGradient || null,
+            allowFlat: false, // element gradients only — no transparent/solid
             apply: (css) => {
                 updateElementModelAndDOM(el.id, { textGradient: css || null });
                 emit('render');
@@ -336,6 +337,7 @@ export function initProperties() {
         if (!el || el.type !== 'text') return;
         openGradientModal({
             currentGradient: el.bgGradient || null,
+            allowFlat: false, // element gradients only — no transparent/solid
             apply: (css) => {
                 updateElementModelAndDOM(el.id, { bgGradient: css || null });
                 emit('render');

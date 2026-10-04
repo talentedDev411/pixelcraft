@@ -11,6 +11,13 @@ const initialState = () => ({
     selectedStopId: null,
     selectedOpacityStopId: null,
     colorFormat: 'hex',
+    /**
+     * Flat (non-gradient) backgrounds live alongside the gradient model so the
+     * canvas background — Transparent | Solid | a gradient — is one concept in
+     * the editor. 'transparent' is the default, which keeps PNG alpha intact.
+     */
+    flatMode: 'transparent', // 'transparent' | 'solid'
+    flatColor: '#ffffff',
     history: [],
     historyIndex: -1,
     theme: 'dark',
@@ -141,6 +148,16 @@ class Store {
             }
             case 'SET_COLOR_FORMAT': {
                 this.state.colorFormat = action.format;
+                shouldHistory = false;
+                break;
+            }
+            case 'SET_FLAT_MODE': {
+                this.state.flatMode = action.mode;
+                shouldHistory = false;
+                break;
+            }
+            case 'SET_FLAT_COLOR': {
+                this.state.flatColor = action.color;
                 shouldHistory = false;
                 break;
             }

@@ -26,6 +26,7 @@ import { initColorPicker } from './ui/color-picker.js';
 let modalEl = null;
 let initialized = false;
 let onApply = null;
+let allowFlat = true;
 
 /**
  * Create the modal DOM structure and append it to document.body.
@@ -96,11 +97,24 @@ function initEditorUI() {
 
 /**
  * Open the gradient editor modal.
- * @param {Object} options - { currentGradient: string|null, apply: (css: string) => void }
+ * @param {Object} options
+ *   currentGradient: string|null — existing gradient CSS to edit
+ *   flatMode: 'transparent'|'solid'|null — flat background to preselect
+ *   flatColor: string — solid color when flatMode is 'solid'
+ *   allowFlat: boolean — offer Transparent/Solid in the Type dropdown
+ *     (on for the canvas background, off for element-only gradients)
+ *   apply: (css: string|null) => void
  */
 export function openGradientModal(options = {}) {
     onApply = options.apply || null;
+    allowFlat = options.allowFlat !== false;
     const store = getStore();
+
+    // Flat mode first: the toolbar hides the solid picker unless we are in it.
+    store.dispatch({ type: 'SET_FLAT_MODE', mode: allowFlat ? (options.flatMode || null) : null });
+    if (allowFlat && options.flatColor) {
+        store.dispatch({ type: 'SET_FLAT_COLOR', color: options.flatColor });
+    }
 
     if (options.currentGradient) {
         // Import the existing gradient CSS into the active gradient
@@ -116,6 +130,26 @@ export function openGradientModal(options = {}) {
 
     if (!modalEl) createModalDOM();
     initEditorUI();
+
+    // Opened from the BG tool this edits the whole background (transparent /
+    // solid / gradient); from the properties panel it is gradient-only, so
+    // the flat options come out of the Type dropdown entirely.
+    modalEl.querySelector('.ge-modal-title').textContent =
+        allowFlat ? '🎨 Background Editor' : '🎨 Gradient Editor';
+    modalEl.querySelector('#ge-modal-apply').textContent =
+        allowFlat ? 'Apply Background' : 'Apply Gradient';
+    const typeSelect = modalEl.querySelector('#ge-gradient-type-select');
+    if (typeSelect) {
+        typeSelect.querySelectorAll('option').forEach(opt => {
+            const isFlat = opt.value === 'transparent' || opt.value === 'solid';
+            opt.hidden = !allowFlat && isFlat;
+            opt.disabled = !allowFlat && isFlat;
+        });
+        // Only force-hide the solid row for gradient-only use; otherwise the
+        // toolbar decides visibility from the current flat mode.
+        const solidPicker = modalEl.querySelector('#ge-flat-picker');
+        if (!allowFlat && solidPicker) solidPicker.style.display = 'none';
+    }
 
     // Wire up close/apply/cancel
     const backdrop = modalEl.querySelector('#ge-modal-backdrop');
@@ -144,6 +178,17 @@ export function openGradientModal(options = {}) {
     modalEl.querySelector('#ge-modal-cancel').addEventListener('click', closeModal);
     modalEl.querySelector('#ge-modal-apply').addEventListener('click', () => {
         const state = store.getState();
+        // Flat modes short-circuit: they carry no gradient CSS at all.
+        if (allowFlat && state.flatMode === 'transparent') {
+            if (onApply) onApply('transparent');
+            closeModal();
+            return;
+        }
+        if (allowFlat && state.flatMode === 'solid') {
+            if (onApply) onApply(state.flatColor);
+            closeModal();
+            return;
+        }
         const gradients = state.gradients.filter((g) => g.enabled);
         if (gradients.length === 0) {
             if (onApply) onApply(null);
