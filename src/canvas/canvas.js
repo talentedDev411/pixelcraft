@@ -192,10 +192,9 @@ export function fullRender() {
     // The canvas paints the active page's background, and the toolbox swatch
     // follows it (also after undo/redo restores a different background).
     const page = getActivePage();
-    const bg = page ? page.bgColor : '#ffffff';
+    const bg = page ? page.bgColor : 'transparent';
     const bgGrad = page ? page.bgGradient : null;
     designCanvas.style.background = bgGrad || bg;
-    if (dom.bgColorInput) dom.bgColorInput.value = bg;
 
     getElements().forEach(el => {
         designCanvas.appendChild(buildElementDiv(el, { selected: isSelected(el.id) }));

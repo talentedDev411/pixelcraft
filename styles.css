@@ -93,8 +93,14 @@ body {
 .tool-half .tool-icon { font-size:1rem; }
 .tool-divider { width:1px; height:18px; background:var(--border); margin:3px 0; }
 .canvas-area { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#e5e7eb; padding:30px; overflow:auto; }
-.canvas-wrapper { background:#fff; box-shadow:0 8px 30px rgba(0,0,0,0.12); border-radius:2px; position:relative; transition: width 0.3s, height 0.3s; flex-shrink:0; overflow:hidden; }
-.canvas { width:100%; height:100%; position:relative; overflow:hidden; background:#fff; }
+/* Checkerboard signals alpha transparency. It lives on the WRAPPER (not the
+   captured .canvas node) so the exported PNG stays transparent. */
+.canvas-wrapper {
+    background: repeating-conic-gradient(#e2e5ea 0% 25%, #ffffff 0% 50%);
+    background-size: 20px 20px;
+    box-shadow:0 8px 30px rgba(0,0,0,0.12); border-radius:2px; position:relative; transition: width 0.3s, height 0.3s; flex-shrink:0; overflow:hidden;
+}
+.canvas { width:100%; height:100%; position:relative; overflow:hidden; background:transparent; }
 .element { position:absolute; cursor:move; user-select:none; box-sizing:border-box; transition: box-shadow 0.15s; }
 .element.selected { outline:2px solid var(--primary); outline-offset:2px; box-shadow: 0 0 0 4px rgba(124,92,252,0.2); }
 .text-element { padding:8px; word-break:break-word; background:transparent; min-width:40px; min-height:20px; display:flex; align-items:center; justify-content:center; font-family:inherit; line-height:1.3; white-space:pre-wrap; text-align:center; outline:none; }
@@ -156,6 +162,12 @@ body {
 .page-thumb.active { border-color:var(--primary); box-shadow:0 0 0 3px rgba(124,92,252,0.2); }
 .page-thumb.drop-target { border-color:var(--primary); background:var(--primary-light); box-shadow:0 0 0 3px rgba(124,92,252,0.25); }
 .page-thumb-canvas { position:relative; overflow:hidden; background:#fff; border-radius:4px; }
+.page-thumb-canvas.thumb-transparent {
+    background: repeating-conic-gradient(#e2e5ea 0% 25%, #ffffff 0% 50%);
+    background-size: 10px 10px;
+}
+
+
 .page-thumb-meta { font-size:0.6rem; color:var(--text-secondary); text-align:center; white-space:nowrap; min-height:12px; line-height:1.2; }
 .page-thumb-num { position:absolute; top:-7px; left:-7px; background:var(--primary); color:#fff; font-size:0.62rem; font-weight:700; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; z-index:2; box-shadow:0 1px 3px rgba(0,0,0,0.3); }
 .page-thumb .thumb-el { position:absolute; pointer-events:none; }

@@ -32,8 +32,12 @@ function nextPageId() {
     return 'pg_' + Date.now() + Math.random().toString(36).slice(2, 7);
 }
 
-/** Create a fresh empty page model. */
-export function createPage(bgColor = '#ffffff') {
+/**
+ * Create a fresh empty page model.
+ * Defaults to a transparent background so uploaded PNGs keep their alpha on
+ * screen and in the exported image (the BG tool's Type field mirrors this).
+ */
+export function createPage(bgColor = 'transparent') {
     return { id: nextPageId(), elements: [], bgColor };
 }
 
@@ -105,7 +109,11 @@ function renderTrack() {
         canvas.className = 'page-thumb-canvas';
         canvas.style.width = w + 'px';
         canvas.style.height = h + 'px';
-        canvas.style.backgroundColor = page.bgColor;
+        if (page.bgColor === 'transparent') {
+            canvas.classList.add('thumb-transparent');
+        } else {
+            canvas.style.backgroundColor = page.bgColor;
+        }
         page.elements.forEach(el => {
             const d = buildElementDiv(el, { scale });
             d.classList.add('thumb-el');

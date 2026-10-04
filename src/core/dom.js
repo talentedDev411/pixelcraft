@@ -16,13 +16,6 @@ export const dom = {
     addTextTool: document.getElementById('addTextTool'),
     imageUploadInput: document.getElementById('imageUploadInput'),
     bgColorTool: document.getElementById('bgColorTool'),
-    bgColorInput: document.getElementById('canvasBgColor'),
-    bgDropdown: document.getElementById('bgDropdown'),
-
-    bgGradientClearBtn: document.getElementById('bgGradientClearBtn'),
-    openGradientEditorBtn: document.getElementById('openGradientEditorBtn'),
-    currentGradientRow: document.getElementById('currentGradientRow'),
-    currentGradientPreview: document.getElementById('currentGradientPreview'),
     undoTool: document.getElementById('undoTool'),
     redoTool: document.getElementById('redoTool'),
     svgPickerTool: document.getElementById('svgPickerTool'),

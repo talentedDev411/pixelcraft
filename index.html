@@ -65,23 +65,8 @@
             <div class="tool" id="addImageTool" title="Upload an image">
                 <label><span class="tool-icon">🖼️</span> Image <input type="file" id="imageUploadInput" accept="image/*" /></label>
             </div>
-            <div class="tool tool-relative" id="bgColorTool" title="Canvas background color">
+            <div class="tool" id="bgColorTool" title="Canvas background — open the background editor">
                 <span class="tool-icon">🎨</span> BG
-                <div class="bg-dropdown" id="bgDropdown" style="display:none;">
-                    <div class="bg-dropdown-row">
-                        <label class="bg-dropdown-label">Solid</label>
-                        <input type="color" id="canvasBgColor" value="#ffffff" class="bg-solid-picker" />
-                    </div>
-                    <div class="bg-dropdown-divider"></div>
-                    <div class="bg-dropdown-row">
-                        <button class="btn-sm" id="openGradientEditorBtn" type="button">🎨 Open Gradient Editor</button>
-                    </div>
-                    <div class="bg-dropdown-row" id="currentGradientRow" style="display:none;">
-                        <label class="bg-dropdown-label">Current</label>
-                        <span id="currentGradientPreview" style="flex:1; height:18px; border-radius:4px; border:1px solid var(--border);"></span>
-                        <button class="btn-sm" id="bgGradientClearBtn" type="button" title="Remove gradient">🗑</button>
-                    </div>
-                </div>
             </div>
             <div class="tool tool-split" id="historyTool" title="Undo (Ctrl+Z) / Redo (Ctrl+Y)">
                 <div class="tool-half tool-btn disabled" id="undoTool" title="Undo (Ctrl+Z)" aria-disabled="true"><span class="tool-icon">↩️</span></div>
