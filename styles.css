@@ -271,7 +271,7 @@ body {
 }
 
 /* Rotate handle for selected text elements */
-.rotate-handle { position:absolute; top:-24px; left:50%; transform:translateX(-50%); width:16px; height:16px; background:var(--primary); border:2px solid #fff; border-radius:50%; cursor:grab; z-index:10; box-sizing:border-box; box-shadow:0 1px 4px rgba(0,0,0,0.25); }
+.rotate-handle { position:absolute; top:-4.5rem; left:50%; transform:translateX(-50%); width:2rem; height:2rem; background:var(--primary); border:2px solid #fff; border-radius:50%; cursor:grab; z-index:10; box-sizing:border-box; box-shadow:0 1px 4px rgba(0,0,0,0.25); }
 .rotate-handle::after { content:'⟳'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:9px; color:#fff; line-height:1; }
 .rotate-handle:active { cursor:grabbing; }
 
