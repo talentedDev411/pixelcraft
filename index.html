@@ -111,6 +111,11 @@
             <div class="canvas-wrapper" id="canvasWrapper">
                 <div class="canvas" id="designCanvas"></div>
                 <div class="marquee-selection" id="marqueeSelection" style="display:none;"></div>
+                <!-- ⋯ FAB: parked here at rest, but re-hosted at runtime into
+                     #btnImageControls — the button cluster created inside the
+                     selected element (div.element.image-element.selected) that
+                     also holds the .rotate-handle, so it follows the element's
+                     rotation. positionFab() moves it between the two homes. -->
                 <div class="element-fab" id="elementFab" style="display:none;">
                     <button class="fab-btn" id="fabMenuBtn" title="Actions">⋯</button>
                     <div class="fab-menu" id="fabMenu" style="display:none;">

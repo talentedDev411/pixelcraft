@@ -41,6 +41,7 @@ export function initInteractions() {
     // ── Rotate state ──
     let isRotating = false;
     let rotateStart = {};
+    let rotateHandleEl = null; // the .rotate-handle the drag started on
 
     // ── Drag state ──
     let draggedElement = null;
@@ -83,7 +84,16 @@ export function initInteractions() {
                 angle = ((angle + 180) % 360 + 360) % 360 - 180; // normalize to [-180, 180]
                 updateElementModelAndDOM(el.id, { rotation: angle });
                 emit('transform', el.id);
-            positionFab();
+                // ── Bubbling: rotate-handle drag → #btnImageControls ──
+                // Fires ONLY while the user drags / clicks the .rotate-handle
+                // button: the event starts on the handle and bubbles up to its
+                // parent cluster inside the element, which re-pins the sibling
+                // buttons so they follow the rotated element (see the listener
+                // in addButtonControls, canvas.js).
+                rotateHandleEl?.dispatchEvent(new CustomEvent('rotatehandle:move', {
+                    bubbles: true,
+                    detail: { rotation: angle },
+                }));
             }
             return;
         }
@@ -189,6 +199,7 @@ export function initInteractions() {
         isResizing = false;
         resizeHandle = null;
         isRotating = false;
+        rotateHandleEl = null;
         draggedElement = null;
         dragStart = { mouseX: 0, mouseY: 0, positions: [] };
         dropTargetPageId = null;
@@ -218,13 +229,26 @@ export function initInteractions() {
             if (!el || el.locked) return;
             beginGesture(); // one undo step for the whole rotation
             isRotating = true;
+            rotateHandleEl = rotateHandle;
             const rect = designCanvas.getBoundingClientRect();
             rotateStart = {
                 cx: rect.left + el.x + el.width / 2,
                 cy: rect.top + el.y + el.height / 2,
             };
+            // ── Bubbling: click on the rotate-handle → #btnImageControls ──
+            // Fired only when the user clicks / drags the .rotate-handle button;
+            // it bubbles up to the parent cluster so the sibling buttons (⋯ FAB)
+            // sync the moment the gesture starts.
+            rotateHandle.dispatchEvent(new CustomEvent('rotatehandle:move', {
+                bubbles: true,
+                detail: { rotation: el.rotation || 0 },
+            }));
             return;
         }
+        // The other cluster buttons (⋯ FAB + its menu) live inside
+        // #btnImageControls within the element now — clicking them must not
+        // start an element drag. The rotate-handle case above already returned.
+        if (e.target.closest('#btnImageControls')) return;
         const handle = e.target.closest('.resize-handle');
         if (handle) {
             const el = getSelectedElement();

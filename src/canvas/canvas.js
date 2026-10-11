@@ -187,7 +187,12 @@ export function buildElementDiv(el, { selected = false, scale = 1 } = {}) {
 
 /** Rebuild every element in the canvas DOM from the current model. */
 export function fullRender() {
-    const { designCanvas } = dom;
+    const { designCanvas, canvasWrapper, elementFab } = dom;
+    // Park the ⋯ FAB back in the canvas wrapper before wiping the canvas —
+    // at runtime it is re-hosted inside the selected element's
+    // #btnImageControls cluster, which innerHTML='' would otherwise detach.
+    if (elementFab.parentElement !== canvasWrapper) canvasWrapper.appendChild(elementFab);
+    elementFab.style.display = 'none';
     designCanvas.innerHTML = '';
     // The canvas paints the active page's background, and the toolbox swatch
     // follows it (also after undo/redo restores a different background).
@@ -222,7 +227,9 @@ export function applySelectionToDOM(ids) {
             // the native text highlight, not leave it dangling.
             if (document.activeElement === elDiv) elDiv.blur();
         }
-        elDiv.querySelectorAll('.resize-handle, .rotate-handle').forEach(h => h.remove());
+        // Remove the whole button cluster (rotate handle + FAB live inside it)
+        // along with the resize handles.
+        elDiv.querySelectorAll('.resize-handle, #btnImageControls').forEach(h => h.remove());
     });
 
     list.forEach(id => {
@@ -235,7 +242,7 @@ export function applySelectionToDOM(ids) {
         if (el.type === 'text') {
             elDiv.setAttribute('contenteditable', 'true');
             addResizeHandles(elDiv);
-            addRotateHandle(elDiv);
+            addButtonControls(elDiv);
             // In select mode a tap must never summon the keyboard — the
             // mobile user is picking elements, not editing text.
             if (document.activeElement !== elDiv && !isSelectMode()) {
@@ -249,7 +256,7 @@ export function applySelectionToDOM(ids) {
             }
         } else if (el.type === 'image' || el.type === 'svg') {
             addResizeHandles(elDiv);
-            addRotateHandle(elDiv);
+            addButtonControls(elDiv);
         }
         // Lock icon overlay
         if (el.locked) {
@@ -281,10 +288,12 @@ export function applySelectionToDOM(ids) {
  * Called from applySelectionToDOM and during drag/resize/rotate in interactions.
  */
 export function positionFab() {
-    const { designCanvas, elementFab, fabMenu } = dom;
+    const { designCanvas, canvasWrapper, elementFab, fabMenu } = dom;
     const ids = getSelectedIds();
     const primary = ids[0] || null;
     if (!primary) {
+        // Nothing selected: park the FAB in the canvas wrapper, hidden.
+        if (elementFab.parentElement !== canvasWrapper) canvasWrapper.appendChild(elementFab);
         elementFab.style.display = 'none';
         fabMenu.style.display = 'none';
         return;
@@ -296,8 +305,21 @@ export function positionFab() {
         fabMenu.style.display = 'none';
         return;
     }
-    elementFab.style.left = (el.x + el.width / 2 - 14) + 'px';
-    elementFab.style.top = (el.y - 36) + 'px';
+    // The FAB shares the element's #btnImageControls cluster with the rotate
+    // handle, so it is placed in ELEMENT-LOCAL coordinates and rotates with
+    // the element whenever the handle turns the parent cluster.
+    const controls = elDiv.querySelector(':scope > #btnImageControls');
+    if (controls) {
+        if (elementFab.parentElement !== controls) controls.appendChild(elementFab);
+        elementFab.style.left = (el.width / 2 - 14) + 'px';
+        elementFab.style.top = '-36px';
+    } else {
+        // Element types without a button cluster (e.g. containers): keep the
+        // old canvas-space placement in the wrapper.
+        if (elementFab.parentElement !== canvasWrapper) canvasWrapper.appendChild(elementFab);
+        elementFab.style.left = (el.x + el.width / 2 - 14) + 'px';
+        elementFab.style.top = (el.y - 36) + 'px';
+    }
     elementFab.style.display = 'block';
     // Update menu item enabled/disabled states
     const lockBtn = fabMenu.querySelector('[data-action="lock"]');
@@ -667,10 +689,48 @@ function addResizeHandles(parentDiv) {
     });
 }
 
-/** Attach the rotate handle to a selected element (text or image). */
-function addRotateHandle(parentDiv) {
+/**
+ * Attach the button cluster to a selected element's DOM node (text, image,
+ * or SVG). #btnImageControls holds BOTH control buttons — the
+ * .rotate-handle and the ⋯ FAB (#elementFab, re-parked here from the canvas
+ * wrapper). Because the cluster lives inside
+ * div.element.image-element.selected, the element's own rotate() transform
+ * carries this parent, so the sibling buttons follow whenever the user
+ * drags / clicks the rotate handle.
+ */
+function addButtonControls(parentDiv) {
+    const controls = document.createElement('div');
+    controls.id = 'btnImageControls';
+    controls.contentEditable = 'false';
+
     const handle = document.createElement('div');
     handle.className = 'rotate-handle';
     handle.contentEditable = 'false';
-    parentDiv.appendChild(handle);
+    controls.appendChild(handle);
+
+    // Re-home the ⋯ FAB into the same cluster as the rotate handle so both
+    // buttons sit under (and rotate with) the selected element.
+    controls.appendChild(dom.elementFab);
+    parentDiv.appendChild(controls);
+
+    // ── Rotate-handle → buttons follow (event BUBBLING) ──────────────
+    // Implemented ONLY when the user drags / clicks the .rotate-handle
+    // button: interactions.js dispatches a bubbling 'rotatehandle:move'
+    // CustomEvent from the handle during its drag gesture, and it travels
+    // up the DOM to this parent cluster. The element div's own rotate()
+    // transform already rotates this whole subtree — the parent rotates, so
+    // the sibling buttons (⋯ FAB) follow — and this listener keeps the FAB
+    // pinned at its local spot above the element for the whole gesture.
+    // No other click ever fires it: the event is only dispatched from the
+    // rotate-handle drag path.
+    controls.addEventListener('rotatehandle:move', () => {
+        const el = findElementById(getElements(), getSelectedElementId());
+        const fab = controls.querySelector('#elementFab');
+        if (!el || !fab) return;
+        fab.style.left = (el.width / 2 - 14) + 'px';
+        fab.style.top = '-36px';
+        fab.style.display = 'block';
+    });
+
+    return controls;
 }
