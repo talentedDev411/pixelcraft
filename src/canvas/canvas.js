@@ -248,8 +248,24 @@ export function applySelectionToDOM(ids) {
             if (document.activeElement !== elDiv && !isSelectMode()) {
                 elDiv.focus();
                 const range = document.createRange();
-                range.selectNodeContents(elDiv);
-                range.collapse(false);
+                // Place the caret at the END OF THE TEXT, not after every child
+                // node. .text-element is a flex container, so all real text
+                // lives in a single anonymous flex item (the chrome — handles
+                // and #btnImageControls with the ⋯ FAB — sits in other flex
+                // items after it). Falling back to selectNodeContents would
+                // put the caret past that chrome, i.e. on a different line.
+                const textItem = Array.from(elDiv.childNodes).find(n =>
+                    n.nodeType === Node.TEXT_NODE ||
+                    !(n instanceof HTMLElement &&
+                        (n.matches('.resize-handle, #btnImageControls') || n.classList.contains('rotate-handle')))
+                );
+                if (textItem) {
+                    range.selectNodeContents(textItem);
+                    range.collapse(false); // collapse to the end of the text
+                } else {
+                    range.selectNodeContents(elDiv);
+                    range.collapse(false);
+                }
                 const sel = window.getSelection();
                 sel.removeAllRanges();
                 sel.addRange(range);
@@ -638,7 +654,17 @@ export function initCanvas() {
         const el = findElementById(getElements(), div.dataset.id);
         if (!el) return;
         record();
-        el.content = div.textContent;
+        // Sync ONLY the real text — never the selection chrome. The ⋯ FAB is
+        // re-homed inside this element at runtime (inside #btnImageControls),
+        // and its markup carries whitespace/labels that must not leak into the
+        // stored content. .text-element is flex, so the text is the first
+        // non-chrome child.
+        const textNode = Array.from(div.childNodes).find(n =>
+            n.nodeType === Node.TEXT_NODE ||
+            !(n instanceof HTMLElement &&
+                (n.matches('.resize-handle, #btnImageControls') || n.classList.contains('rotate-handle')))
+        );
+        el.content = textNode ? textNode.textContent : '';
         emit('text-edited', el.content);
     });
 
