@@ -192,6 +192,11 @@ body {
     position: absolute;
     z-index: 15;
     pointer-events: auto;
+    /* The FAB is re-hosted inside the selected element at runtime; inside a
+       text element (white-space: pre-wrap, contenteditable) its pretty-printed
+       whitespace would create line boxes and push the ⋯ button out of place.
+       Force normal collapsing so it always shrink-wraps to the 28px button. */
+    white-space: normal;
 }
 .fab-btn {
     width: 28px;
